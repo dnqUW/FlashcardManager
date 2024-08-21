@@ -45,4 +45,8 @@ public class Flashcard {
     public int hashCode() {
         return Objects.hash(question, answer);
     }
+
+    public String toString() {
+        return "Question: " + getQuestion() + " " + "Answer: " + getAnswer();
+    }
 }

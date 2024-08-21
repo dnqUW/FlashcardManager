@@ -14,6 +14,7 @@ public class DataManager {
         try (Writer writer = new FileWriter(FILE_NAME)) {
             Gson gson = new Gson();
             gson.toJson(decks, writer);
+            System.out.println("Decks saved successfully: " + decks);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -21,13 +22,18 @@ public class DataManager {
 
     // Load decks from a file
     public static Map<String, ArrayList<Flashcard>> loadDecks() {
+        Map<String, ArrayList<Flashcard>> decks = new HashMap<>();
         try (Reader reader = new FileReader(FILE_NAME)) {
             Gson gson = new Gson();
             Type deckMapType = new TypeToken<Map<String, ArrayList<Flashcard>>>(){}.getType();
-            return gson.fromJson(reader, deckMapType);
+            decks = gson.fromJson(reader, deckMapType);
+        } catch (FileNotFoundException e) {
+            // File does not exist, initialize with an empty map
+            System.out.println("File not found, initializing with an empty deck list.");
         } catch (IOException e) {
             e.printStackTrace();
-            return new HashMap<>();
         }
+        return decks;
     }
+
 }
