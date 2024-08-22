@@ -12,6 +12,14 @@ public class Main {
     private static JPanel cardPanel = new JPanel(new CardLayout()); // Panel for different screens
 
     public static void main(String[] args) {
+
+        try {
+            // Set the look-and-feel to the cross-platform look-and-feel
+            UIManager.setLookAndFeel(UIManager.getCrossPlatformLookAndFeelClassName());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
         // Creating the frame
         JFrame frame = new JFrame("Flashcard Manager");
         frame.setLayout(new BorderLayout());
@@ -160,6 +168,7 @@ public class Main {
         inputPanel.add(questionLabel, gbc);
 
         gbc.gridy = 4;
+        gbc.fill = GridBagConstraints.HORIZONTAL; // Ensure the text field spans full width
         inputPanel.add(questionField, gbc);
 
         gbc.gridy = 5;
@@ -170,6 +179,7 @@ public class Main {
 
         gbc.gridy = 7;
         gbc.gridwidth = 1;
+        gbc.fill = GridBagConstraints.NONE;
         inputPanel.add(addFlashcardButton, gbc);
 
         // Creates a JTextArea to display added flashcards
@@ -279,6 +289,7 @@ public class Main {
         });
         return panel;
     }
+
 
 
 
