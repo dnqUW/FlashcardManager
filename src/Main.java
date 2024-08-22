@@ -1,13 +1,10 @@
 import javax.swing.*;
-import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import javax.swing.event.DocumentEvent;
 
 public class Main {
     // Data structure to store flashcard decks
@@ -21,7 +18,7 @@ public class Main {
         frame.setBounds(400, 400, 1200, 800);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
-        //Load the decks in
+        // Load the decks in
         decks = DataManager.loadDecks();
 
         // Create main panel with CardLayout
@@ -58,16 +55,13 @@ public class Main {
         buttonPanel.setBackground(Color.DARK_GRAY);
 
         // Create initial buttons for functionality
-        JButton createButton = new JButton("Create");
-        createButton.setBackground(Color.BLACK);
-        createButton.setForeground(Color.WHITE);
-        createButton.setPreferredSize(new Dimension(290, 200));
+        JButton createButton = createStyledButton("Create");
         createButton.addActionListener(e -> {
             // Remove the existing "CreateDeckScreen" panel if it exists
             cardPanel.remove(cardPanel.getComponent(1));
 
             // Recreate the "CreateDeckScreen" panel
-            JPanel newCreateDeckPanel = createDeckPanel(); // Call the method to create a new deck panel
+            JPanel newCreateDeckPanel = createDeckPanel();
             cardPanel.add(newCreateDeckPanel, "CreateDeckScreen");
 
             // Show the newly created "CreateDeckScreen"
@@ -75,32 +69,19 @@ public class Main {
             cl.show(cardPanel, "CreateDeckScreen");
         });
 
-
-        // Study button initialization
-        JButton studyButton = new JButton("Study");
-        studyButton.setBackground(Color.BLACK);
-        studyButton.setForeground(Color.WHITE);
-        studyButton.setPreferredSize(new Dimension(290, 200));
+        JButton studyButton = createStyledButton("Study");
         studyButton.addActionListener(e -> {
             CardLayout cl = (CardLayout) cardPanel.getLayout();
             cl.show(cardPanel, "StudyDeckScreen");
         });
 
-        // Modify deck button initialization
-        JButton modifyButton = new JButton("Modify");
-        modifyButton.setBackground(Color.BLACK);
-        modifyButton.setForeground(Color.WHITE);
-        modifyButton.setPreferredSize(new Dimension(290, 200));
+        JButton modifyButton = createStyledButton("Modify");
         modifyButton.addActionListener(e -> {
             CardLayout cl = (CardLayout) cardPanel.getLayout();
             cl.show(cardPanel, "ModifyDeckScreen");
         });
 
-        // Delete deck button initialization
-        JButton deleteButton = new JButton("Delete");
-        deleteButton.setBackground(Color.BLACK);
-        deleteButton.setForeground(Color.WHITE);
-        deleteButton.setPreferredSize(new Dimension(290, 200));
+        JButton deleteButton = createStyledButton("Delete");
         deleteButton.addActionListener(e -> {
             CardLayout cl = (CardLayout) cardPanel.getLayout();
             cl.show(cardPanel, "DeleteDeckScreen");
@@ -115,25 +96,12 @@ public class Main {
         return panel;
     }
 
-
     // Returns a JPanel of the create page
     private static JPanel createDeckPanel() {
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBackground(Color.DARK_GRAY);
 
-        // Back button functionality
-        JPanel backButtonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        backButtonPanel.setBackground(Color.DARK_GRAY);
-
-        JButton backButton = new JButton("Back");
-        backButton.setForeground(Color.WHITE);
-        backButton.setBackground(Color.BLACK);
-        backButton.addActionListener(e -> {
-            CardLayout cl = (CardLayout) cardPanel.getLayout();
-            cl.show(cardPanel, "TitleScreen");
-        });
-
-        backButtonPanel.add(backButton);
+        JPanel backButtonPanel = createBackButtonPanel("TitleScreen");
 
         // Create a container for input fields and buttons
         JPanel inputPanel = new JPanel(new GridBagLayout());
@@ -147,12 +115,9 @@ public class Main {
         askDeckName.setForeground(Color.WHITE);
 
         JTextField deckNameField = new JTextField(20);
-        JButton saveDeckButton = new JButton("Save Deck");
-        saveDeckButton.setBackground(Color.BLACK);
-        saveDeckButton.setForeground(Color.WHITE);
-        saveDeckButton.setEnabled(false);  // Initially disable the save button
+        JButton saveDeckButton = createStyledButton("Save Deck");
+        saveDeckButton.setEnabled(false);
 
-        // Add deck name components
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.gridwidth = 2;
@@ -166,7 +131,6 @@ public class Main {
         gbc.fill = GridBagConstraints.NONE;
         inputPanel.add(saveDeckButton, gbc);
 
-        // Add flashcard fields and buttons
         JLabel questionLabel = new JLabel("Question:");
         questionLabel.setForeground(Color.WHITE);
 
@@ -176,10 +140,8 @@ public class Main {
         JTextField questionField = new JTextField(20);
         JTextField answerField = new JTextField(20);
 
-        JButton addFlashcardButton = new JButton("Add Flashcard");
-        addFlashcardButton.setBackground(Color.BLACK);
-        addFlashcardButton.setForeground(Color.WHITE);
-        addFlashcardButton.setEnabled(false);  // Initially disable the add flashcard button
+        JButton addFlashcardButton = createStyledButton("Add Flashcard");
+        addFlashcardButton.setEnabled(false);
 
         gbc.gridy = 3;
         gbc.gridwidth = 2;
@@ -198,57 +160,39 @@ public class Main {
         gbc.gridwidth = 1;
         inputPanel.add(addFlashcardButton, gbc);
 
-        // Creates a JTextArea to display added flashcards
         JTextArea flashcardDisplay = new JTextArea(10, 40);
         flashcardDisplay.setEditable(false);
         flashcardDisplay.setBackground(Color.LIGHT_GRAY);
         flashcardDisplay.setForeground(Color.BLACK);
         JScrollPane scrollPane = new JScrollPane(flashcardDisplay);
-        scrollPane.setPreferredSize(new Dimension(400, 400)); // Set preferred size for the scroll pane
+        scrollPane.setPreferredSize(new Dimension(400, 400));
 
-        // Adding components to the panel
         panel.add(backButtonPanel, BorderLayout.NORTH);
         panel.add(inputPanel, BorderLayout.CENTER);
         panel.add(scrollPane, BorderLayout.SOUTH);
 
-        // Enable flashcard fields and buttons after deck name is entered
-        deckNameField.getDocument().addDocumentListener(new DocumentListener() {
-            public void changedUpdate(DocumentEvent e) {
-                enableButtons();
-            }
-            public void removeUpdate(DocumentEvent e) {
-                enableButtons();
-            }
-            public void insertUpdate(DocumentEvent e) {
-                enableButtons();
-            }
-
-            public void enableButtons() {
-                boolean isDeckNameEntered = !deckNameField.getText().isEmpty();
-                addFlashcardButton.setEnabled(isDeckNameEntered);
-                saveDeckButton.setEnabled(isDeckNameEntered);
-            }
+        deckNameField.getDocument().addDocumentListener((SimpleDocumentListener) e -> {
+            boolean isDeckNameEntered = !deckNameField.getText().isEmpty();
+            addFlashcardButton.setEnabled(isDeckNameEntered);
+            saveDeckButton.setEnabled(isDeckNameEntered);
         });
 
         ArrayList<Flashcard> deck = new ArrayList<>();
-        // Actions for adding flashcards and saving the deck
         addFlashcardButton.addActionListener(e -> {
             String question = questionField.getText();
             String answer = answerField.getText();
             int response = 0;
             if (!question.isEmpty() && !answer.isEmpty()) {
                 Flashcard flashcard = new Flashcard(question.trim(), answer.trim());
-                if(!deck.contains(flashcard)) {
+                if (!deck.contains(flashcard)) {
                     deck.add(flashcard);
                 } else {
                     response = JOptionPane.showConfirmDialog(panel, "This flashcard already exists. " +
                             "Would you like to add it again?");
                 }
 
-
-                // Update JTextArea to display the added flashcard
-                if(response == JOptionPane.YES_OPTION) {
-                    flashcardDisplay.append("Question: " + flashcard.getQuestion()+ "\nAnswer: " +
+                if (response == JOptionPane.YES_OPTION) {
+                    flashcardDisplay.append("Question: " + flashcard.getQuestion() + "\nAnswer: " +
                             flashcard.getAnswer() + "\n\n");
 
                     JOptionPane.showMessageDialog(panel, "Flashcard Added!");
@@ -265,14 +209,10 @@ public class Main {
         saveDeckButton.addActionListener(e -> {
             String deckName = deckNameField.getText();
             if (!deckName.isEmpty()) {
-
-                // Save decks to file
+                decks.put(deckName, deck);
                 DataManager.saveDecks(decks);
-
-                // Notify user
                 JOptionPane.showMessageDialog(panel, "Deck Saved!");
 
-                // Clear the text fields and disable components
                 deckNameField.setText("");
                 addFlashcardButton.setEnabled(false);
                 saveDeckButton.setEnabled(false);
@@ -292,14 +232,11 @@ public class Main {
                 inputPanel.revalidate();
                 inputPanel.repaint();
 
-                // Refresh the study panel to show the new deck
-                refreshStudyPanel();
+                updateDeckList();
             } else {
                 JOptionPane.showMessageDialog(panel, "Please enter a deck name.");
             }
         });
-
-
 
         return panel;
     }
@@ -308,147 +245,302 @@ public class Main {
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBackground(Color.DARK_GRAY);
 
-        // Back button functionality
-        JPanel backButtonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        backButtonPanel.setBackground(Color.DARK_GRAY);
+        JPanel northPanel = new JPanel(new BorderLayout());
+        northPanel.setBackground(Color.DARK_GRAY);
 
-        JButton backButton = new JButton("Back");
-        backButton.setForeground(Color.WHITE);
-        backButton.setBackground(Color.BLACK);
-        backButton.addActionListener(e -> {
-            CardLayout cl = (CardLayout) cardPanel.getLayout();
-            cl.show(cardPanel, "TitleScreen");
-        });
-
-        backButtonPanel.add(backButton);
+        JPanel backButtonPanel = createBackButtonPanel("TitleScreen");
 
         JLabel label = new JLabel("Select a deck to study.");
         label.setHorizontalAlignment(SwingConstants.CENTER);
-        label.setVerticalAlignment(SwingConstants.TOP);
         label.setForeground(Color.WHITE);
         label.setFont(new Font("Arial", Font.BOLD, 30));
 
-        panel.add(backButtonPanel, BorderLayout.NORTH);
-        panel.add(label, BorderLayout.CENTER);
+        northPanel.add(backButtonPanel, BorderLayout.WEST);
+        northPanel.add(label, BorderLayout.CENTER);
 
-        // Create panel for deck buttons
+        panel.add(northPanel, BorderLayout.NORTH);
+
         JPanel deckListPanel = new JPanel();
         deckListPanel.setLayout(new GridLayout(0, 1, 10, 10));
         deckListPanel.setBackground(Color.DARK_GRAY);
 
-        JScrollPane scrollPane = new JScrollPane(deckListPanel);
-        scrollPane.setPreferredSize(new Dimension(400, 400));
-        scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
-
-        panel.add(scrollPane, BorderLayout.SOUTH);
-        panel.revalidate();
-        panel.repaint();
-
-        // Initial update of deck list
-        updateDeckList(deckListPanel);
-
-        return panel;
-    }
-
-
-    private static void updateDeckList(JPanel deckListPanel) {
-        deckListPanel.removeAll(); // Clear existing components
-
         for (String deckName : decks.keySet()) {
-            JButton deckButton = new JButton(deckName);
-            deckButton.setForeground(Color.WHITE);
-            deckButton.setBackground(Color.BLACK);
-            deckButton.setFont(new Font("Arial", Font.BOLD, 30));
-            deckButton.setPreferredSize(new Dimension(300, 50));
-            deckButton.addActionListener(e -> studyDeck(deckName)); // Handle deck selection
+            JButton deckButton = createStyledButton(deckName);
+            deckButton.addActionListener(e -> {
+                JPanel studyPanel = new JPanel(new BorderLayout());
+                studyPanel.setBackground(Color.DARK_GRAY);
+
+                JLabel questionLabel = new JLabel();
+                questionLabel.setHorizontalAlignment(SwingConstants.CENTER);
+                questionLabel.setForeground(Color.WHITE);
+                questionLabel.setFont(new Font("Arial", Font.PLAIN, 20));
+
+                JTextField answerField = new JTextField(20);
+                JButton showAnswerButton = createStyledButton("Show Answer");
+                JButton nextButton = createStyledButton("Next");
+
+                studyPanel.add(questionLabel, BorderLayout.NORTH);
+                studyPanel.add(answerField, BorderLayout.CENTER);
+
+                JPanel buttonPanel = new JPanel();
+                buttonPanel.setBackground(Color.DARK_GRAY);
+                buttonPanel.add(showAnswerButton);
+                buttonPanel.add(nextButton);
+
+                studyPanel.add(buttonPanel, BorderLayout.SOUTH);
+
+                // Study deck logic
+                ArrayList<Flashcard> deck = decks.get(deckName);
+                int[] currentCardIndex = {0};
+                displayFlashcard(deck, currentCardIndex, questionLabel);
+
+                showAnswerButton.addActionListener(showAnswerEvent -> {
+                    Flashcard currentCard = deck.get(currentCardIndex[0]);
+                    answerField.setText(currentCard.getAnswer());
+                });
+
+                nextButton.addActionListener(nextEvent -> {
+                    currentCardIndex[0]++;
+                    if (currentCardIndex[0] < deck.size()) {
+                        displayFlashcard(deck, currentCardIndex, questionLabel);
+                        answerField.setText("");
+                    } else {
+                        JOptionPane.showMessageDialog(panel, "You have completed the deck!");
+                        CardLayout cl = (CardLayout) cardPanel.getLayout();
+                        cl.show(cardPanel, "StudyDeckScreen");
+                    }
+                });
+
+                cardPanel.add(studyPanel, "StudyPanel");
+                CardLayout cl = (CardLayout) cardPanel.getLayout();
+                cl.show(cardPanel, "StudyPanel");
+            });
 
             deckListPanel.add(deckButton);
         }
 
-        deckListPanel.revalidate(); // Refresh the panel to show new buttons
-        deckListPanel.repaint();
+        JScrollPane scrollPane = new JScrollPane(deckListPanel);
+        scrollPane.setPreferredSize(new Dimension(400, 400));
+        panel.add(scrollPane, BorderLayout.CENTER);
+
+        return panel;
     }
 
-    private static void refreshStudyPanel() {
-        JPanel studyPanel = (JPanel) cardPanel.getComponent(2);
+    // Creates a "Back" button panel that can switch between screens
+    private static JPanel createBackButtonPanel(String targetScreen) {
+        JPanel backButtonPanel = new JPanel(new BorderLayout());
+        backButtonPanel.setBackground(Color.DARK_GRAY);
 
-        // Print the class names of all components in studyPanel
-        for (Component comp : studyPanel.getComponents()) {
-            System.out.println(comp.getClass().getName());
-        }
+        JButton backButton = createStyledButton("Back");
+        backButton.addActionListener(e -> {
+            CardLayout cl = (CardLayout) cardPanel.getLayout();
+            cl.show(cardPanel, targetScreen);
+        });
+
+        backButtonPanel.add(backButton, BorderLayout.WEST);
+        return backButtonPanel;
     }
 
-
-    // Method to handle studying a deck
-    private static void studyDeck(String deckName) {
-        ArrayList<Flashcard> deck = decks.get(deckName);
-        if (deck == null) {
-            JOptionPane.showMessageDialog(null, "Deck not found: " + deckName);
-        } else {
-            JPanel panel = new JPanel();
-            for(Flashcard card : deck) {
-                panel.add(new JLabel(card.getQuestion()));
-            }
-            cardPanel.add(panel);
-        }
-    }
-
-
+    // Returns a JPanel for deck modification
     private static JPanel createModifyPanel() {
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBackground(Color.DARK_GRAY);
 
-        JPanel backButtonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        backButtonPanel.setBackground(Color.DARK_GRAY);
+        JPanel backButtonPanel = createBackButtonPanel("TitleScreen");
 
-        JButton backButton = new JButton("Back");
-        backButton.setForeground(Color.WHITE);
-        backButton.setBackground(Color.BLACK);
-        backButton.addActionListener(e -> {
-            CardLayout cl = (CardLayout) cardPanel.getLayout();
-            cl.show(cardPanel, "TitleScreen");
-        });
+        JPanel centerPanel = new JPanel();
+        centerPanel.setLayout(new GridLayout(0, 1, 10, 10));
+        centerPanel.setBackground(Color.DARK_GRAY);
 
-        backButtonPanel.add(backButton);
-
-        JLabel label = new JLabel("Modify Decks", SwingConstants.CENTER);
+        JLabel label = new JLabel("Select a deck to modify.");
         label.setForeground(Color.WHITE);
-        label.setFont(new Font("Arial", Font.BOLD, 60));
+        label.setFont(new Font("Arial", Font.BOLD, 30));
+        centerPanel.add(label);
+
+        for (String deckName : decks.keySet()) {
+            JButton deckButton = createStyledButton(deckName);
+            deckButton.addActionListener(e -> {
+                ArrayList<Flashcard> deck = decks.get(deckName);
+                if (deck != null) {
+                    JPanel modifyPanel = new JPanel(new BorderLayout());
+                    modifyPanel.setBackground(Color.DARK_GRAY);
+
+                    JLabel titleLabel = new JLabel("Modify Deck: " + deckName, SwingConstants.CENTER);
+                    titleLabel.setForeground(Color.WHITE);
+                    titleLabel.setFont(new Font("Arial", Font.BOLD, 20));
+                    modifyPanel.add(titleLabel, BorderLayout.NORTH);
+
+                    JPanel flashcardPanel = new JPanel();
+                    flashcardPanel.setLayout(new GridLayout(0, 1, 10, 10));
+                    flashcardPanel.setBackground(Color.DARK_GRAY);
+
+                    for (Flashcard flashcard : deck) {
+                        JPanel flashcardEntry = new JPanel();
+                        flashcardEntry.setBackground(Color.LIGHT_GRAY);
+
+                        JLabel questionLabel = new JLabel("Q: " + flashcard.getQuestion());
+                        questionLabel.setFont(new Font("Arial", Font.PLAIN, 16));
+                        JLabel answerLabel = new JLabel("A: " + flashcard.getAnswer());
+                        answerLabel.setFont(new Font("Arial", Font.PLAIN, 16));
+
+                        JButton deleteButton = createStyledButton("Delete");
+                        deleteButton.addActionListener(deleteEvent -> {
+                            deck.remove(flashcard);
+                            flashcardPanel.remove(flashcardEntry);
+                            flashcardPanel.revalidate();
+                            flashcardPanel.repaint();
+                        });
+
+                        flashcardEntry.add(questionLabel);
+                        flashcardEntry.add(answerLabel);
+                        flashcardEntry.add(deleteButton);
+
+                        flashcardPanel.add(flashcardEntry);
+                    }
+
+                    JScrollPane scrollPane = new JScrollPane(flashcardPanel);
+                    scrollPane.setPreferredSize(new Dimension(400, 400));
+
+                    modifyPanel.add(scrollPane, BorderLayout.CENTER);
+
+                    JButton saveChangesButton = createStyledButton("Save Changes");
+                    saveChangesButton.addActionListener(saveEvent -> {
+                        decks.put(deckName, deck);
+                        DataManager.saveDecks(decks);
+                        JOptionPane.showMessageDialog(panel, "Deck changes saved!");
+                        CardLayout cl = (CardLayout) cardPanel.getLayout();
+                        cl.show(cardPanel, "ModifyDeckScreen");
+                    });
+
+                    modifyPanel.add(saveChangesButton, BorderLayout.SOUTH);
+
+                    cardPanel.add(modifyPanel, "ModifyPanel");
+                    CardLayout cl = (CardLayout) cardPanel.getLayout();
+                    cl.show(cardPanel, "ModifyPanel");
+                }
+            });
+
+            centerPanel.add(deckButton);
+        }
+
+        JScrollPane scrollPane = new JScrollPane(centerPanel);
+        scrollPane.setPreferredSize(new Dimension(400, 400));
 
         panel.add(backButtonPanel, BorderLayout.NORTH);
-        panel.add(label, BorderLayout.CENTER);
-
-        // Add functionality and UI components for modifying decks here
+        panel.add(scrollPane, BorderLayout.CENTER);
 
         return panel;
     }
 
+    // Returns a JPanel for deleting a deck
     private static JPanel createDeletePanel() {
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBackground(Color.DARK_GRAY);
 
-        JPanel backButtonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        backButtonPanel.setBackground(Color.DARK_GRAY);
+        JPanel backButtonPanel = createBackButtonPanel("TitleScreen");
 
-        JButton backButton = new JButton("Back");
-        backButton.setForeground(Color.WHITE);
-        backButton.setBackground(Color.BLACK);
-        backButton.addActionListener(e -> {
-            CardLayout cl = (CardLayout) cardPanel.getLayout();
-            cl.show(cardPanel, "TitleScreen");
-        });
+        JPanel centerPanel = new JPanel();
+        centerPanel.setLayout(new GridLayout(0, 1, 10, 10));
+        centerPanel.setBackground(Color.DARK_GRAY);
 
-        backButtonPanel.add(backButton);
-
-        JLabel label = new JLabel("Delete Decks", SwingConstants.CENTER);
+        JLabel label = new JLabel("Select a deck to delete.");
         label.setForeground(Color.WHITE);
-        label.setFont(new Font("Arial", Font.BOLD, 60));
+        label.setFont(new Font("Arial", Font.BOLD, 30));
+        centerPanel.add(label);
+
+        for (String deckName : decks.keySet()) {
+            JButton deckButton = createStyledButton(deckName);
+            deckButton.addActionListener(e -> {
+                int response = JOptionPane.showConfirmDialog(panel, "Are you sure you want to delete the deck \"" +
+                        deckName + "\"?", "Confirm Delete", JOptionPane.YES_NO_OPTION);
+
+                if (response == JOptionPane.YES_OPTION) {
+                    decks.remove(deckName);
+                    DataManager.saveDecks(decks);
+                    JOptionPane.showMessageDialog(panel, "Deck \"" + deckName + "\" deleted!");
+                    updateDeckList();
+                }
+            });
+
+            centerPanel.add(deckButton);
+        }
+
+        JScrollPane scrollPane = new JScrollPane(centerPanel);
+        scrollPane.setPreferredSize(new Dimension(400, 400));
 
         panel.add(backButtonPanel, BorderLayout.NORTH);
-        panel.add(label, BorderLayout.CENTER);
-
-        // Add functionality and UI components for deleting decks here
+        panel.add(scrollPane, BorderLayout.CENTER);
 
         return panel;
     }
+
+    // Updates the deck list in the Study and Modify panels
+    private static void updateDeckList() {
+        cardPanel.remove(cardPanel.getComponent(2));
+        cardPanel.remove(cardPanel.getComponent(3));
+
+        JPanel studyDeckScreen = createStudyPanel();
+        JPanel modifyDeckScreen = createModifyPanel();
+
+        cardPanel.add(studyDeckScreen, "StudyDeckScreen");
+        cardPanel.add(modifyDeckScreen, "ModifyDeckScreen");
+
+        cardPanel.revalidate();
+        cardPanel.repaint();
+    }
+
+    // Creates a styled button with a consistent look
+    private static JButton createStyledButton(String text) {
+        JButton button = new JButton(text);
+        button.setForeground(Color.BLACK);
+        button.setBackground(Color.LIGHT_GRAY);
+        button.setFont(new Font("Arial", Font.PLAIN, 20));
+        button.setBorder(BorderFactory.createLineBorder(Color.WHITE, 2));
+        button.setPreferredSize(new Dimension(200, 50));
+        button.setFocusPainted(false);
+
+        // Additional hover effect
+        button.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseEntered(java.awt.event.MouseEvent evt) {
+                button.setBackground(Color.GRAY);
+                button.setForeground(Color.WHITE);
+            }
+
+            public void mouseExited(java.awt.event.MouseEvent evt) {
+                button.setBackground(Color.LIGHT_GRAY);
+                button.setForeground(Color.BLACK);
+            }
+        });
+
+        return button;
+    }
+
+    // Display the current flashcard
+    private static void displayFlashcard(ArrayList<Flashcard> deck, int[] currentCardIndex, JLabel questionLabel) {
+        Flashcard currentCard = deck.get(currentCardIndex[0]);
+        questionLabel.setText("Question: " + currentCard.getQuestion());
+    }
+
+    @FunctionalInterface
+    interface SimpleDocumentListener extends DocumentListener {
+        void update(DocumentEvent e);
+
+        @Override
+        default void insertUpdate(DocumentEvent e) {
+            update(e);
+        }
+
+        @Override
+        default void removeUpdate(DocumentEvent e) {
+            update(e);
+        }
+
+        @Override
+        default void changedUpdate(DocumentEvent e) {
+            update(e);
+        }
+    }
+
+
 }
+
