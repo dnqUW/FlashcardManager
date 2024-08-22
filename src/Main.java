@@ -272,12 +272,11 @@ public class Main {
                 inputPanel.repaint();
 
                 // Refresh the study panel to show the new deck
-                updateDeckList();
+                updateDeckList(); // Ensure this method only updates the panel without changing layout
             } else {
                 JOptionPane.showMessageDialog(panel, "Please enter a deck name.");
             }
         });
-
         return panel;
     }
 
@@ -518,18 +517,47 @@ public class Main {
 
     // Updates the deck list in the Study and Modify panels
     private static void updateDeckList() {
-        cardPanel.remove(cardPanel.getComponent(2));
-        cardPanel.remove(cardPanel.getComponent(3));
+        JPanel studyPanel = (JPanel) cardPanel.getComponent(2); // Get the StudyDeckScreen
+        JScrollPane scrollPane = (JScrollPane) studyPanel.getComponent(1); // Get the scroll pane
+        JPanel deckListPanel = (JPanel) scrollPane.getViewport().getView(); // Get the panel within the scroll pane
 
-        JPanel studyDeckScreen = createStudyPanel();
-        JPanel modifyDeckScreen = createModifyPanel();
+        deckListPanel.removeAll(); // Clear existing components
 
-        cardPanel.add(studyDeckScreen, "StudyDeckScreen");
-        cardPanel.add(modifyDeckScreen, "ModifyDeckScreen");
+        for (String deckName : decks.keySet()) {
+            JButton deckButton = new JButton(deckName);
+            deckButton.setForeground(Color.WHITE);
+            deckButton.setBackground(Color.BLACK);
+            deckButton.setFont(new Font("Arial", Font.BOLD, 30));
+            deckButton.setPreferredSize(new Dimension(300, 50));
+            deckButton.addActionListener(e -> studyDeck(deckName)); // Handle deck selection
 
-        cardPanel.revalidate();
-        cardPanel.repaint();
+            deckListPanel.add(deckButton);
+        }
+
+        deckListPanel.revalidate(); // Refresh the panel to show new buttons
+        deckListPanel.repaint();
     }
+
+    private static void studyDeck(String deckName) {
+        ArrayList<Flashcard> deck = decks.get(deckName);
+        if (deck == null) {
+            JOptionPane.showMessageDialog(null, "Deck not found: " + deckName);
+        } else {
+            // Implement the logic to display the flashcards for the selected deck
+            JPanel panel = new JPanel();
+            for (Flashcard card : deck) {
+                panel.add(new JLabel(card.getQuestion() + ": " + card.getAnswer()));
+            }
+
+            // Add the panel to cardPanel with a unique name or identifier
+            cardPanel.add(panel, "StudyDeck_" + deckName);
+
+            // Show the study deck screen
+            CardLayout cl = (CardLayout) cardPanel.getLayout();
+            cl.show(cardPanel, "StudyDeck_" + deckName);
+        }
+    }
+
 
     // Creates a styled button with a consistent look
     private static JButton createStyledButton(String text) {
