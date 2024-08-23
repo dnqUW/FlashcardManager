@@ -2,12 +2,13 @@ import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import java.awt.*;
+import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-public class Main {
+public class FlashcardManager {
     // Data structure to store flashcard decks
     private static Map<String, ArrayList<Flashcard>> decks = new HashMap<>();
     private static JPanel cardPanel = new JPanel(new CardLayout()); // Panel for different screens
@@ -433,16 +434,45 @@ public class Main {
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBackground(Color.DARK_GRAY);
 
+        // Create a panel for the back button
         JPanel backButtonPanel = createBackButtonPanel("TitleScreen");
+        JButton backButton = (JButton) backButtonPanel.getComponent(0); // Assume the back button is the first component
+        Dimension backButtonSize = backButton.getPreferredSize();
+        int backButtonHeight = backButtonSize.height;
 
-        JPanel centerPanel = new JPanel();
-        centerPanel.setLayout(new GridLayout(0, 1, 10, 10));
+        // Create a panel for the content (label and deck buttons)
+        JPanel centerPanel = new JPanel(new BorderLayout());
         centerPanel.setBackground(Color.DARK_GRAY);
+
+        // Create a panel to hold the label and back button vertically aligned
+        JPanel topPanel = new JPanel(new BorderLayout());
+        topPanel.setBackground(Color.DARK_GRAY);
+
+        // Add back button panel to the left of topPanel
+        topPanel.add(backButtonPanel, BorderLayout.WEST);
+
+        // Create a panel for the label with fixed height equal to the back button
+        JPanel labelPanel = new JPanel();
+        labelPanel.setBackground(Color.DARK_GRAY);
+        labelPanel.setPreferredSize(new Dimension(400, backButtonHeight)); // Set height to match the back button
 
         JLabel label = new JLabel("Select a deck to modify.");
         label.setForeground(Color.WHITE);
         label.setFont(new Font("Arial", Font.BOLD, 30));
-        centerPanel.add(label);
+        label.setHorizontalAlignment(SwingConstants.CENTER);
+
+        labelPanel.add(label);
+
+        // Add label panel to the center of topPanel
+        topPanel.add(labelPanel, BorderLayout.CENTER);
+
+        // Add topPanel to the north of centerPanel
+        centerPanel.add(topPanel, BorderLayout.NORTH);
+
+        // Create a panel to hold deck buttons
+        JPanel deckButtonPanel = new JPanel();
+        deckButtonPanel.setLayout(new GridLayout(0, 1, 10, 10));
+        deckButtonPanel.setBackground(Color.DARK_GRAY);
 
         for (String deckName : decks.keySet()) {
             JButton deckButton = createStyledButton(deckName);
@@ -452,18 +482,18 @@ public class Main {
                     JPanel modifyPanel = new JPanel(new BorderLayout());
                     modifyPanel.setBackground(Color.DARK_GRAY);
 
-                    JPanel northPanel = new JPanel(new BorderLayout());
-                    northPanel.setBackground(Color.DARK_GRAY);
+                    JPanel northModifyPanel = new JPanel(new BorderLayout());
+                    northModifyPanel.setBackground(Color.DARK_GRAY);
 
                     JPanel modifyDeckPanelBackButton = createBackButtonPanel("TitleScreen");
-                    northPanel.add(modifyDeckPanelBackButton, BorderLayout.WEST);
+                    northModifyPanel.add(modifyDeckPanelBackButton, BorderLayout.WEST);
 
                     JLabel titleLabel = new JLabel("Modify Deck: " + deckName, SwingConstants.CENTER);
                     titleLabel.setForeground(Color.WHITE);
                     titleLabel.setFont(new Font("Arial", Font.BOLD, 20));
-                    northPanel.add(titleLabel, BorderLayout.CENTER);
+                    northModifyPanel.add(titleLabel, BorderLayout.CENTER);
 
-                    modifyPanel.add(northPanel, BorderLayout.NORTH);
+                    modifyPanel.add(northModifyPanel, BorderLayout.NORTH);
 
                     JPanel flashcardPanel = new JPanel();
                     flashcardPanel.setLayout(new GridLayout(0, 1, 10, 10));
@@ -478,6 +508,7 @@ public class Main {
                         JLabel answerLabel = new JLabel("A: " + flashcard.getAnswer());
                         answerLabel.setFont(new Font("Arial", Font.PLAIN, 16));
 
+                        // Button to delete the flashcard
                         JButton deleteButton = createStyledButton("Delete");
                         deleteButton.addActionListener(deleteEvent -> {
                             deck.remove(flashcard);
@@ -486,8 +517,29 @@ public class Main {
                             flashcardPanel.repaint();
                         });
 
+                        // Button to edit the flashcard
+                        JButton editButton = createStyledButton("Edit");
+                        editButton.addActionListener(editEvent -> {
+                            JTextField newQuestionField = new JTextField(flashcard.getQuestion());
+                            JTextField newAnswerField = new JTextField(flashcard.getAnswer());
+                            JPanel editPanel = new JPanel(new GridLayout(0, 1));
+                            editPanel.add(new JLabel("Edit Question:"));
+                            editPanel.add(newQuestionField);
+                            editPanel.add(new JLabel("Edit Answer:"));
+                            editPanel.add(newAnswerField);
+
+                            int result = JOptionPane.showConfirmDialog(null, editPanel, "Edit Flashcard", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+                            if (result == JOptionPane.OK_OPTION) {
+                                flashcard.setQuestion(newQuestionField.getText());
+                                flashcard.setAnswer(newAnswerField.getText());
+                                questionLabel.setText("Q: " + flashcard.getQuestion());
+                                answerLabel.setText("A: " + flashcard.getAnswer());
+                            }
+                        });
+
                         flashcardEntry.add(questionLabel);
                         flashcardEntry.add(answerLabel);
+                        flashcardEntry.add(editButton);
                         flashcardEntry.add(deleteButton);
 
                         flashcardPanel.add(flashcardEntry);
@@ -516,46 +568,60 @@ public class Main {
                     JOptionPane.showMessageDialog(cardPanel, "There are no cards in this deck.");
                 }
             });
-            centerPanel.add(deckButton);
+            deckButtonPanel.add(deckButton);
         }
 
-        JScrollPane scrollPane = new JScrollPane(centerPanel);
-        scrollPane.setPreferredSize(new Dimension(400, 400));
+        JScrollPane deckScrollPane = new JScrollPane(deckButtonPanel);
+        deckScrollPane.setPreferredSize(new Dimension(400, 400));
 
-        panel.add(backButtonPanel, BorderLayout.NORTH);
-        panel.add(scrollPane, BorderLayout.CENTER);
+        centerPanel.add(deckScrollPane, BorderLayout.CENTER);
+
+        panel.add(centerPanel, BorderLayout.CENTER);
 
         return panel;
     }
 
-
+    // Returns a JPanel for deleting a deck
     // Returns a JPanel for deleting a deck
     private static JPanel createDeletePanel() {
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBackground(Color.DARK_GRAY);
 
+        // Create and add the back button panel
         JPanel backButtonPanel = createBackButtonPanel("TitleScreen");
+        panel.add(backButtonPanel, BorderLayout.NORTH);
 
-        JPanel centerPanel = new JPanel();
-        centerPanel.setLayout(new GridLayout(0, 1, 10, 10));
+        // Create a panel for the center content
+        JPanel centerPanel = new JPanel(new BorderLayout()); // Changed to BorderLayout
         centerPanel.setBackground(Color.DARK_GRAY);
+
+        // Create a panel for the label with fixed height
+        JPanel labelPanel = new JPanel();
+        labelPanel.setBackground(Color.DARK_GRAY);
+        labelPanel.setPreferredSize(new Dimension(400, 100)); // Adjust as needed
 
         JLabel label = new JLabel("Select a deck to delete.");
         label.setForeground(Color.WHITE);
         label.setFont(new Font("Arial", Font.BOLD, 30));
-        centerPanel.add(label);
+        label.setHorizontalAlignment(SwingConstants.CENTER); // Center the text in the label
 
+        labelPanel.add(label);
+
+        // Add the label panel to the center of centerPanel
+        centerPanel.add(labelPanel, BorderLayout.NORTH);
+
+        // Create and add the deck buttons
         updateDeleteDeckButtons(centerPanel); // Method to update buttons
 
+        // Add the scroll pane with the center panel to the main panel
         JScrollPane scrollPane = new JScrollPane(centerPanel);
         scrollPane.setPreferredSize(new Dimension(400, 400));
 
-
-        panel.add(backButtonPanel, BorderLayout.NORTH);
         panel.add(scrollPane, BorderLayout.CENTER);
 
         return panel;
     }
+
 
     private static void updateDeleteDeckButtons(JPanel centerPanel) {
         centerPanel.removeAll(); // Clear existing buttons
@@ -653,6 +719,34 @@ public class Main {
 
         return button;
     }
+
+    private static JButton createStyledButton(String text, ActionListener actionListener) {
+        JButton button = new JButton(text);
+        button.setForeground(Color.BLACK);
+        button.setBackground(Color.LIGHT_GRAY);
+        button.setFont(new Font("Arial", Font.PLAIN, 20));
+        button.setBorder(BorderFactory.createLineBorder(Color.WHITE, 2));
+        button.setPreferredSize(new Dimension(200, 50));
+        button.setFocusPainted(false);
+        button.addActionListener(actionListener);
+        addButtonHoverEffect(button);
+        return button;
+    }
+
+    private static void addButtonHoverEffect(JButton button) {
+        button.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseEntered(java.awt.event.MouseEvent evt) {
+                button.setBackground(Color.DARK_GRAY); // Change to a different color on hover
+            }
+
+            @Override
+            public void mouseExited(java.awt.event.MouseEvent evt) {
+                button.setBackground(Color.LIGHT_GRAY); // Revert to the original color when not hovering
+            }
+        });
+    }
+
 
     // Display the current flashcard
     private static void displayFlashcard(ArrayList<Flashcard> deck, int[] currentCardIndex, JLabel questionLabel) {
