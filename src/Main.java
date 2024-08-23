@@ -27,6 +27,12 @@ public class Main {
         frame.setBounds(400, 400, 1200, 800);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
+        ImageIcon icon = new ImageIcon("./icons/Flashcard Manager.png");
+        frame.setIconImage(icon.getImage());
+        if (icon.getImageLoadStatus() != MediaTracker.COMPLETE) {
+            System.err.println("Failed to load image icon.");
+        }
+
         // Load the decks in
         decks = DataManager.loadDecks();
 
@@ -543,6 +549,7 @@ public class Main {
 
         JScrollPane scrollPane = new JScrollPane(centerPanel);
         scrollPane.setPreferredSize(new Dimension(400, 400));
+
 
         panel.add(backButtonPanel, BorderLayout.NORTH);
         panel.add(scrollPane, BorderLayout.CENTER);
