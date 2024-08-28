@@ -582,45 +582,58 @@ public class FlashcardManager {
     }
 
     // Returns a JPanel for deleting a deck
-    // Returns a JPanel for deleting a deck
     private static JPanel createDeletePanel() {
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBackground(Color.DARK_GRAY);
 
-        // Create and add the back button panel
+        // Create and add the back button panel at the top
         JPanel backButtonPanel = createBackButtonPanel("TitleScreen");
         panel.add(backButtonPanel, BorderLayout.NORTH);
-
-        // Create a panel for the center content
-        JPanel centerPanel = new JPanel(new BorderLayout()); // Changed to BorderLayout
-        centerPanel.setBackground(Color.DARK_GRAY);
 
         // Create a panel for the label with fixed height
         JPanel labelPanel = new JPanel();
         labelPanel.setBackground(Color.DARK_GRAY);
-        labelPanel.setPreferredSize(new Dimension(400, 100)); // Adjust as needed
+        labelPanel.setPreferredSize(new Dimension(400, 50)); // Adjust height as needed
 
         JLabel label = new JLabel("Select a deck to delete.");
         label.setForeground(Color.WHITE);
         label.setFont(new Font("Arial", Font.BOLD, 30));
-        label.setHorizontalAlignment(SwingConstants.CENTER); // Center the text in the label
+        label.setHorizontalAlignment(SwingConstants.CENTER);
 
         labelPanel.add(label);
 
-        // Add the label panel to the center of centerPanel
-        centerPanel.add(labelPanel, BorderLayout.NORTH);
+        // Create a panel for the deck buttons using GridLayout
+        JPanel deckButtonPanel = new JPanel(new GridLayout(0, 1, 10, 10)); // 1 column, variable rows
+        deckButtonPanel.setBackground(Color.DARK_GRAY);
 
-        // Create and add the deck buttons
-        updateDeleteDeckButtons(centerPanel); // Method to update buttons
+        // Add buttons to the deckButtonPanel
+        for (String deckName : decks.keySet()) {
+            JButton deckButton = createStyledButton(deckName);
+            deckButton.addActionListener(e -> {
+                // Handle deck deletion here
+                decks.remove(deckName);
+                DataManager.saveDecks(decks);
+                updateDeleteDeckButtons(deckButtonPanel); // Refresh buttons after deletion
+            });
+            deckButtonPanel.add(deckButton);
+        }
 
-        // Add the scroll pane with the center panel to the main panel
-        JScrollPane scrollPane = new JScrollPane(centerPanel);
+        // Wrap the deckButtonPanel in a scroll pane
+        JScrollPane scrollPane = new JScrollPane(deckButtonPanel);
         scrollPane.setPreferredSize(new Dimension(400, 400));
 
-        panel.add(scrollPane, BorderLayout.CENTER);
+        // Add the label panel and scroll pane to the centerPanel
+        JPanel centerPanel = new JPanel(new BorderLayout());
+        centerPanel.setBackground(Color.DARK_GRAY);
+        centerPanel.add(labelPanel, BorderLayout.NORTH);
+        centerPanel.add(scrollPane, BorderLayout.CENTER);
+
+        // Add the centerPanel to the main panel
+        panel.add(centerPanel, BorderLayout.CENTER);
 
         return panel;
     }
+
 
 
     private static void updateDeleteDeckButtons(JPanel centerPanel) {
@@ -652,26 +665,60 @@ public class FlashcardManager {
 
     // Updates the deck list in the Study and Modify panels
     private static void updateDeckList() {
-        JPanel studyPanel = (JPanel) cardPanel.getComponent(2); // Get the StudyDeckScreen
-        JScrollPane scrollPane = (JScrollPane) studyPanel.getComponent(1); // Get the scroll pane
-        JPanel deckListPanel = (JPanel) scrollPane.getViewport().getView(); // Get the panel within the scroll pane
+        try {
+//            // Get the StudyDeckScreen panel
+//            JPanel studyPanel = (JPanel) cardPanel.getComponent(2);
+//            System.out.println("StudyPanel: " + studyPanel);
+//
+//            // Check if studyPanel has the expected component
+//            if (studyPanel.getComponentCount() > 0) {
+//                JPanel studyJPanel = (JPanel) studyPanel.getComponent(0);
+//                System.out.println("StudyJPanel: " + studyJPanel);
+//
+//                // Check if studyJPanel has the expected component
+//                if (studyJPanel.getComponentCount() > 1) {
+//                    JScrollPane scrollPane = (JScrollPane) studyJPanel.getComponent(1);
+//                    System.out.println("ScrollPane: " + scrollPane);
+//
+//                    // Get the panel within the scroll pane
+//                    JPanel deckListPanel = (JPanel) scrollPane.getViewport().getView();
+//                    System.out.println("DeckListPanel: " + deckListPanel);
+//
+//                    // Ensure deckListPanel uses GridLayout
+//                    if (deckListPanel.getLayout() instanceof GridLayout) {
+//                        // Clear existing components
+//                        deckListPanel.removeAll();
+//
+//                        // Add buttons for each deck
+//                        for (String deckName : decks.keySet()) {
+//                            JButton deckButton = new JButton(deckName);
+//                            deckButton.setForeground(Color.WHITE);
+//                            deckButton.setBackground(Color.BLACK);
+//                            deckButton.setFont(new Font("Arial", Font.BOLD, 30));
+//                            deckButton.setPreferredSize(new Dimension(300, 50));
+//                            deckButton.addActionListener(e -> studyDeck(deckName)); // Handle deck selection
+//
+//                            deckListPanel.add(deckButton);
+//                        }
+//
+//                        // Refresh the panel to show new buttons
+//                        deckListPanel.revalidate();
+//                        deckListPanel.repaint();
+//                    } else {
+//                        System.err.println("deckListPanel does not use GridLayout.");
+//                    }
+//                } else {
+//                    System.err.println("studyJPanel does not have enough components.");
+//                }
+//            } else {
+//                System.err.println("studyPanel does not have enough components.");
+//            }
 
-        deckListPanel.removeAll(); // Clear existing components
-
-        for (String deckName : decks.keySet()) {
-            JButton deckButton = new JButton(deckName);
-            deckButton.setForeground(Color.WHITE);
-            deckButton.setBackground(Color.BLACK);
-            deckButton.setFont(new Font("Arial", Font.BOLD, 30));
-            deckButton.setPreferredSize(new Dimension(300, 50));
-            deckButton.addActionListener(e -> studyDeck(deckName)); // Handle deck selection
-
-            deckListPanel.add(deckButton);
+        } catch (Exception e) {
+            e.printStackTrace();
         }
-
-        deckListPanel.revalidate(); // Refresh the panel to show new buttons
-        deckListPanel.repaint();
     }
+
 
     private static void studyDeck(String deckName) {
         ArrayList<Flashcard> deck = decks.get(deckName);
