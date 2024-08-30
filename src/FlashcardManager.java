@@ -3,6 +3,9 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import java.awt.*;
 import java.awt.event.ActionListener;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -117,8 +120,37 @@ public class FlashcardManager {
         buttonPanel.add(modifyButton);
         buttonPanel.add(deleteButton);
 
+        createButton.addActionListener(e -> {
+            System.out.println("Create button clicked");
+            cardPanel.remove(cardPanel.getComponent(1));
+            JPanel newCreateDeckPanel = createDeckPanel();
+            cardPanel.add(newCreateDeckPanel, "CreateDeckScreen");
+            CardLayout cl = (CardLayout) cardPanel.getLayout();
+            cl.show(cardPanel, "CreateDeckScreen");
+        });
+
+        studyButton.addActionListener(e -> {
+            System.out.println("Study button clicked");
+            CardLayout cl = (CardLayout) cardPanel.getLayout();
+            cl.show(cardPanel, "StudyDeckScreen");
+        });
+
+        modifyButton.addActionListener(e -> {
+            System.out.println("Modify button clicked");
+            CardLayout cl = (CardLayout) cardPanel.getLayout();
+            cl.show(cardPanel, "ModifyDeckScreen");
+        });
+
+        deleteButton.addActionListener(e -> {
+            System.out.println("Delete button clicked");
+            CardLayout cl = (CardLayout) cardPanel.getLayout();
+            cl.show(cardPanel, "DeleteDeckScreen");
+        });
+
+
         panel.add(buttonPanel, BorderLayout.SOUTH);
         return panel;
+
     }
 
     // Returns a JPanel of the create page
@@ -301,6 +333,7 @@ public class FlashcardManager {
                 inputPanel.repaint();
 
                 // Refresh the other panels to show the new deck
+                System.out.println("Saving deck");
                 updateAllPanels();
             } else {
                 JOptionPane.showMessageDialog(panel, "Please enter a deck name.");
@@ -331,6 +364,9 @@ public class FlashcardManager {
         JPanel deckListPanel = new JPanel();
         deckListPanel.setLayout(new GridLayout(0, 1, 10, 10));
         deckListPanel.setBackground(Color.DARK_GRAY);
+
+
+
 
         for (String deckName : decks.keySet()) {
             JButton deckButton = createStyledButton(deckName);
@@ -676,149 +712,299 @@ public class FlashcardManager {
         updateStudyPanel();
         updateModifyPanel();
         updateDeletePanel();
-    }
 
+        cardPanel.revalidate();
+        cardPanel.repaint();
+    }
 
     private static void updateStudyPanel() {
-        if (studyPanel == null) {
-            studyPanel = createStudyPanel(); // Create the panel if it's not already created
-        } else {
-            studyPanel.removeAll(); // Remove all existing components
+        try {
+            if (studyPanel == null) {
+                studyPanel = createStudyPanel();
+                cardPanel.add(studyPanel, "StudyPanel");
+            } else {
+                System.out.println("Clearing study panel components...");
+                studyPanel.removeAll(); // Clear existing components
 
-            // Recreate and add components
-            JPanel northPanel = new JPanel(new BorderLayout());
-            northPanel.setBackground(Color.DARK_GRAY);
+                JPanel updatedPanel = createStudyPanel();
+                studyPanel.add(updatedPanel, BorderLayout.CENTER); // Add updated panel components
 
-            JPanel backButtonPanel = createBackButtonPanel("TitleScreen");
+                studyPanel.revalidate();
+                studyPanel.repaint();
 
-            JLabel label = new JLabel("Select a deck to study.");
-            label.setHorizontalAlignment(SwingConstants.CENTER);
-            label.setForeground(Color.WHITE);
-            label.setFont(new Font("Arial", Font.BOLD, 30));
-
-            northPanel.add(backButtonPanel, BorderLayout.WEST);
-            northPanel.add(label, BorderLayout.CENTER);
-
-            studyPanel.add(northPanel, BorderLayout.NORTH);
-
-            JPanel deckListPanel = new JPanel();
-            deckListPanel.setLayout(new GridLayout(0, 1, 10, 10));
-            deckListPanel.setBackground(Color.DARK_GRAY);
-
-            for (String deckName : decks.keySet()) {
-                JButton deckButton = createStyledButton(deckName);
-                deckButton.addActionListener(e -> {
-                    // Existing logic for button action
-                });
-                deckListPanel.add(deckButton);
+                System.out.println("Study panel updated and revalidated.");
             }
-
-            JScrollPane scrollPane = new JScrollPane(deckListPanel);
-            scrollPane.setPreferredSize(new Dimension(400, 400));
-            studyPanel.add(scrollPane, BorderLayout.CENTER);
-
-            studyPanel.revalidate(); // Refresh the panel layout
-            studyPanel.repaint();    // Redraw the panel
-//            cardPanel.add(studyPanel);
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.out.println("An error occurred while updating the study panel: " + e.getMessage());
         }
     }
+
 
     private static void updateModifyPanel() {
-        if (modifyPanel == null) {
-            modifyPanel = createModifyPanel(); // Create the panel if it's not already created
-        } else {
-            modifyPanel.removeAll(); // Remove all existing components
+        try {
+            if (modifyPanel == null) {
+                modifyPanel = createModifyPanel();
+                cardPanel.add(modifyPanel, "ModifyPanel");
+            } else {
+                System.out.println("Clearing modify panel components...");
+                modifyPanel.removeAll(); // Clear existing components
 
-            // Recreate and add components
-            JPanel centerPanel = new JPanel(new BorderLayout());
-            centerPanel.setBackground(Color.DARK_GRAY);
+                JPanel updatedPanel = createModifyPanel();
+                modifyPanel.add(updatedPanel, BorderLayout.CENTER); // Add updated panel components
 
-            JPanel topPanel = new JPanel(new BorderLayout());
-            topPanel.setBackground(Color.DARK_GRAY);
+                modifyPanel.revalidate();
+                modifyPanel.repaint();
 
-            JPanel backButtonPanel = createBackButtonPanel("TitleScreen");
-            topPanel.add(backButtonPanel, BorderLayout.WEST);
-
-            JPanel labelPanel = new JPanel();
-            labelPanel.setBackground(Color.DARK_GRAY);
-            JLabel label = new JLabel("Select a deck to modify.");
-            label.setForeground(Color.WHITE);
-            label.setFont(new Font("Arial", Font.BOLD, 30));
-            label.setHorizontalAlignment(SwingConstants.CENTER);
-            labelPanel.add(label);
-
-            topPanel.add(labelPanel, BorderLayout.CENTER);
-            centerPanel.add(topPanel, BorderLayout.NORTH);
-
-            JPanel deckButtonPanel = new JPanel();
-            deckButtonPanel.setLayout(new GridLayout(0, 1, 10, 10));
-            deckButtonPanel.setBackground(Color.DARK_GRAY);
-
-            for (String deckName : decks.keySet()) {
-                JButton deckButton = createStyledButton(deckName);
-                deckButton.addActionListener(e -> {
-                    // Existing logic for button action
-                });
-                deckButtonPanel.add(deckButton);
+                System.out.println("Modify panel updated and revalidated.");
             }
-
-            JScrollPane scrollPane = new JScrollPane(deckButtonPanel);
-            scrollPane.setPreferredSize(new Dimension(400, 400));
-            centerPanel.add(scrollPane, BorderLayout.CENTER);
-
-            modifyPanel.add(centerPanel, BorderLayout.CENTER);
-
-            modifyPanel.revalidate(); // Refresh the panel layout
-            modifyPanel.repaint();    // Redraw the panel
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.out.println("An error occurred while updating the modify panel: " + e.getMessage());
         }
     }
+
 
     private static void updateDeletePanel() {
-        if (deletePanel == null) {
-            deletePanel = createDeletePanel(); // Create the panel if it's not already created
-        } else {
-            deletePanel.removeAll(); // Remove all existing components
+        try {
+            if (deletePanel == null) {
+                deletePanel = createDeletePanel();
+                cardPanel.add(deletePanel, "DeletePanel");
+            } else {
+                System.out.println("Clearing delete panel components...");
+                deletePanel.removeAll(); // Clear existing components
 
-            // Create a new layout and components
-            JPanel topPanel = new JPanel(new BorderLayout());
-            topPanel.setBackground(Color.DARK_GRAY);
+                JPanel updatedPanel = createDeletePanel();
+                deletePanel.add(updatedPanel, BorderLayout.CENTER); // Add updated panel components
 
-            // Back Button Panel
-            JPanel backButtonPanel = createBackButtonPanel("TitleScreen");
-            topPanel.add(backButtonPanel, BorderLayout.WEST);
+                deletePanel.revalidate();
+                deletePanel.repaint();
 
-            // Label Panel
-            JLabel label = new JLabel("Select a deck to delete.");
-            label.setForeground(Color.WHITE);
-            label.setFont(new Font("Arial", Font.BOLD, 30));
-            label.setHorizontalAlignment(SwingConstants.CENTER);
-            topPanel.add(label, BorderLayout.CENTER);
-
-            deletePanel.add(topPanel, BorderLayout.NORTH);
-
-            // Deck List Panel
-            JPanel deckListPanel = new JPanel();
-            deckListPanel.setLayout(new GridLayout(0, 1, 10, 10));
-            deckListPanel.setBackground(Color.DARK_GRAY);
-
-            for (String deckName : decks.keySet()) {
-                JButton deleteButton = createStyledButton("Delete " + deckName);
-                deleteButton.addActionListener(e -> {
-                    decks.remove(deckName);  // Remove the deck from the map
-                    updateAllPanels();       // Update all panels to reflect the deletion
-                });
-                deckListPanel.add(deleteButton);
+                System.out.println("Delete panel updated and revalidated.");
             }
-
-            JScrollPane scrollPane = new JScrollPane(deckListPanel);
-            scrollPane.setPreferredSize(new Dimension(400, 400));
-            deletePanel.add(scrollPane, BorderLayout.CENTER);
-
-            // Revalidate and repaint to apply changes
-            deletePanel.revalidate();
-            deletePanel.repaint();
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.out.println("An error occurred while updating the delete panel: " + e.getMessage());
         }
     }
+
+
+
+
+//    private static void updateStudyPanel() {
+//        if (studyPanel == null) {
+//            studyPanel = createStudyPanel(); // Create the panel if it's not already created
+//        } else {
+//            studyPanel.removeAll(); // Remove all existing components
+//
+//            // Recreate and add components
+//            JPanel northPanel = new JPanel(new BorderLayout());
+//            northPanel.setBackground(Color.DARK_GRAY);
+//
+//            JPanel backButtonPanel = createBackButtonPanel("TitleScreen");
+//
+//            JLabel label = new JLabel("Select a deck to study.");
+//            label.setHorizontalAlignment(SwingConstants.CENTER);
+//            label.setForeground(Color.WHITE);
+//            label.setFont(new Font("Arial", Font.BOLD, 30));
+//
+//            northPanel.add(backButtonPanel, BorderLayout.WEST);
+//            northPanel.add(label, BorderLayout.CENTER);
+//
+//            studyPanel.add(northPanel, BorderLayout.NORTH);
+//
+//            JPanel deckListPanel = new JPanel();
+//            deckListPanel.setLayout(new GridLayout(0, 1, 10, 10));
+//            deckListPanel.setBackground(Color.DARK_GRAY);
+//
+//            for (String deckName : decks.keySet()) {
+//                JButton deckButton = createStyledButton(deckName);
+//                deckButton.addActionListener(e -> {
+//                    // Existing logic for button action
+//                    JPanel studyPanel = new JPanel(new BorderLayout());
+//                    studyPanel.setBackground(Color.DARK_GRAY);
+//
+//                    JButton backButton = createStyledButton("Back");
+//                    backButton.addActionListener(backEvent -> {
+//                        CardLayout cl = (CardLayout) cardPanel.getLayout();
+//                        cl.show(cardPanel, "TitleScreen"); // Adjust "TitleScreen" to your desired screen
+//                    });
+//
+//                    JPanel backButtonPanelStudy = new JPanel(new BorderLayout());
+//                    backButtonPanelStudy.setBackground(Color.DARK_GRAY);
+//                    backButtonPanelStudy.add(backButton, BorderLayout.WEST);
+//
+//                    JLabel questionLabel = new JLabel();
+//                    questionLabel.setHorizontalAlignment(SwingConstants.CENTER);
+//                    questionLabel.setForeground(Color.WHITE);
+//                    questionLabel.setFont(new Font("Arial", Font.PLAIN, 20));
+//
+//                    JTextField answerField = new JTextField(20);
+//                    answerField.setEditable(false); // Make answerField non-editable
+//                    JButton showAnswerButton = createStyledButton("Show Answer");
+//                    JButton nextButton = createStyledButton("Next");
+//
+//                    JPanel buttonPanel = new JPanel();
+//                    buttonPanel.setBackground(Color.DARK_GRAY);
+//                    buttonPanel.add(showAnswerButton);
+//                    buttonPanel.add(nextButton);
+//
+//                    JPanel centerPanel = new JPanel(new BorderLayout());
+//                    centerPanel.setBackground(Color.DARK_GRAY);
+//                    centerPanel.add(questionLabel, BorderLayout.NORTH); // Place questionLabel at the top
+//                    centerPanel.add(answerField, BorderLayout.CENTER); // Place answerField in the center
+//
+//                    // Add components to the studyPanel
+//                    studyPanel.add(backButtonPanelStudy, BorderLayout.NORTH); // Back button at the top
+//                    studyPanel.add(centerPanel, BorderLayout.CENTER); // Center panel for question and answer field
+//                    studyPanel.add(buttonPanel, BorderLayout.SOUTH); // Button panel at the bottom
+//
+//                    // Study deck logic
+//                    ArrayList<Flashcard> deck = decks.get(deckName);
+//                    Collections.shuffle(deck); // Shuffles the deck on every call
+//                    int[] currentCardIndex = {0};
+//                    if (!deck.isEmpty()) {
+//                        displayFlashcard(deck, currentCardIndex, questionLabel);
+//                        cardPanel.add(studyPanel, "StudyPanel");
+//                        CardLayout cl = (CardLayout) cardPanel.getLayout();
+//                        cl.show(cardPanel, "StudyPanel");
+//                    } else {
+//                        JOptionPane.showMessageDialog(studyPanel, "There are no cards in this deck.");
+//                        return; // Exit the method if there are no cards
+//                    }
+//
+//                    showAnswerButton.addActionListener(showAnswerEvent -> {
+//                        if (currentCardIndex[0] < deck.size()) {
+//                            Flashcard currentCard = deck.get(currentCardIndex[0]);
+//                            answerField.setFont(new Font("Arial", Font.BOLD, 30));
+//                            answerField.setHorizontalAlignment(SwingConstants.CENTER);
+//                            answerField.setText(currentCard.getAnswer());
+//                        } else {
+//                            JOptionPane.showMessageDialog(studyPanel, "No more cards in the deck!");
+//                        }
+//                    });
+//
+//                    nextButton.addActionListener(nextEvent -> {
+//                        currentCardIndex[0]++;
+//                        if (currentCardIndex[0] < deck.size()) {
+//                            displayFlashcard(deck, currentCardIndex, questionLabel);
+//                            answerField.setText(""); // Clear the answer field
+//                        } else {
+//                            JOptionPane.showMessageDialog(studyPanel, "You have completed the deck!");
+//                            CardLayout cl = (CardLayout) cardPanel.getLayout();
+//                            cl.show(cardPanel, "TitleScreen"); // Adjust "TitleScreen" to your desired screen
+//                        }
+//                    });
+//
+//                });
+//                deckListPanel.add(deckButton);
+//            }
+//
+//            JScrollPane scrollPane = new JScrollPane(deckListPanel);
+//            scrollPane.setPreferredSize(new Dimension(400, 400));
+//            studyPanel.add(scrollPane, BorderLayout.CENTER);
+//
+//            studyPanel.revalidate(); // Refresh the panel layout
+//            studyPanel.repaint();    // Redraw the panel
+//        }
+//    }
+
+//    private static void updateModifyPanel() {
+//        if (modifyPanel == null) {
+//            modifyPanel = createModifyPanel(); // Create the panel if it's not already created
+//        } else {
+//            modifyPanel.removeAll(); // Remove all existing components
+//
+//            // Recreate and add components
+//            JPanel centerPanel = new JPanel(new BorderLayout());
+//            centerPanel.setBackground(Color.DARK_GRAY);
+//
+//            JPanel topPanel = new JPanel(new BorderLayout());
+//            topPanel.setBackground(Color.DARK_GRAY);
+//
+//            JPanel backButtonPanel = createBackButtonPanel("TitleScreen");
+//            topPanel.add(backButtonPanel, BorderLayout.WEST);
+//
+//            JPanel labelPanel = new JPanel();
+//            labelPanel.setBackground(Color.DARK_GRAY);
+//            JLabel label = new JLabel("Select a deck to modify.");
+//            label.setForeground(Color.WHITE);
+//            label.setFont(new Font("Arial", Font.BOLD, 30));
+//            label.setHorizontalAlignment(SwingConstants.CENTER);
+//            labelPanel.add(label);
+//
+//            topPanel.add(labelPanel, BorderLayout.CENTER);
+//            centerPanel.add(topPanel, BorderLayout.NORTH);
+//
+//            JPanel deckButtonPanel = new JPanel();
+//            deckButtonPanel.setLayout(new GridLayout(0, 1, 10, 10));
+//            deckButtonPanel.setBackground(Color.DARK_GRAY);
+//
+//            for (String deckName : decks.keySet()) {
+//                JButton deckButton = createStyledButton(deckName);
+//                deckButton.addActionListener(e -> {
+//                    // Existing logic for button action
+//                });
+//                deckButtonPanel.add(deckButton);
+//            }
+//
+//            JScrollPane scrollPane = new JScrollPane(deckButtonPanel);
+//            scrollPane.setPreferredSize(new Dimension(400, 400));
+//            centerPanel.add(scrollPane, BorderLayout.CENTER);
+//
+//            modifyPanel.add(centerPanel, BorderLayout.CENTER);
+//
+//            modifyPanel.revalidate(); // Refresh the panel layout
+//            modifyPanel.repaint();    // Redraw the panel
+//        }
+//    }
+
+//    private static void updateDeletePanel() {
+//        if (deletePanel == null) {
+//            deletePanel = createDeletePanel(); // Create the panel if it's not already created
+//        } else {
+//            deletePanel.removeAll(); // Remove all existing components
+//
+//            // Create a new layout and components
+//            JPanel topPanel = new JPanel(new BorderLayout());
+//            topPanel.setBackground(Color.DARK_GRAY);
+//
+//            // Back Button Panel
+//            JPanel backButtonPanel = createBackButtonPanel("TitleScreen");
+//            topPanel.add(backButtonPanel, BorderLayout.WEST);
+//
+//            // Label Panel
+//            JLabel label = new JLabel("Select a deck to delete.");
+//            label.setForeground(Color.WHITE);
+//            label.setFont(new Font("Arial", Font.BOLD, 30));
+//            label.setHorizontalAlignment(SwingConstants.CENTER);
+//            topPanel.add(label, BorderLayout.CENTER);
+//
+//            deletePanel.add(topPanel, BorderLayout.NORTH);
+//
+//            // Deck List Panel
+//            JPanel deckListPanel = new JPanel();
+//            deckListPanel.setLayout(new GridLayout(0, 1, 10, 10));
+//            deckListPanel.setBackground(Color.DARK_GRAY);
+//
+//            for (String deckName : decks.keySet()) {
+//                JButton deleteButton = createStyledButton("Delete " + deckName);
+//                deleteButton.addActionListener(e -> {
+//                    decks.remove(deckName);  // Remove the deck from the map
+//                    updateAllPanels();       // Update all panels to reflect the deletion
+//                });
+//                deckListPanel.add(deleteButton);
+//            }
+//
+//            JScrollPane scrollPane = new JScrollPane(deckListPanel);
+//            scrollPane.setPreferredSize(new Dimension(400, 400));
+//            deletePanel.add(scrollPane, BorderLayout.CENTER);
+//
+//            // Revalidate and repaint to apply changes
+//            deletePanel.revalidate();
+//            deletePanel.repaint();
+//        }
+//    }
 
 
 
