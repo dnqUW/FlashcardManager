@@ -545,11 +545,14 @@ public class FlashcardManager {
                         deck.addAll(incorrectAnswers);
                         incorrectAnswers.clear();
                         currentCardIndex[0] = 0;
-                        JOptionPane.showMessageDialog(studyPanel, "Let's review the ones you got wrong.");
                         buttonPanel.add(showAnswerButton);
+                        JOptionPane.showMessageDialog(studyPanel, "Let's review the ones you got wrong.");
                         displayFlashcard(deck, currentCardIndex, questionLabel);
                         answerField.setText(""); // Clear the answer field
+                        buttonPanel.revalidate();
+                        buttonPanel.repaint();
                     } else {
+                        JOptionPane.showMessageDialog(studyPanel,"You've completed the deck!");
                         // Navigate back to the deck list panel
                         CardLayout cl = (CardLayout) cardPanel.getLayout();
                         cl.show(cardPanel, "StudyDeckScreen");
