@@ -16,10 +16,11 @@ public class FlashcardManager {
     // Data structure to store flashcard decks
     private static Map<String, ArrayList<Flashcard>> decks = new HashMap<>();
     private static JPanel cardPanel = new JPanel(new CardLayout()); // Panel for different screens
-    private static JPanel createPanel;
-    private static JPanel studyPanel;
-    private static JPanel modifyPanel;
-    private static JPanel deletePanel;
+    private static JPanel studyPanel; // Study panel
+    private static JPanel modifyPanel; // Modify panel
+    private static JPanel deletePanel; // Delete panel
+    // Field to store the current deck name
+    private static String currentDeckName = ""; // Current deck name
 
     public static void main(String[] args) {
         try {
@@ -158,6 +159,7 @@ public class FlashcardManager {
 
     }
 
+
     private static JPanel createDeckPanel() {
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBackground(Color.DARK_GRAY);
@@ -183,6 +185,11 @@ public class FlashcardManager {
         saveDeckButton.setForeground(Color.WHITE);
         saveDeckButton.setEnabled(false);  // Initially disable the save button
 
+        JButton editDeckNameButton = new JButton("Edit Deck Name");
+        editDeckNameButton.setBackground(Color.BLACK);
+        editDeckNameButton.setForeground(Color.WHITE);
+        editDeckNameButton.setEnabled(false); // Initially disabled
+
         // Add deck name components
         gbc.gridx = 0;
         gbc.gridy = 0;
@@ -197,6 +204,9 @@ public class FlashcardManager {
         gbc.gridwidth = 1;
         gbc.fill = GridBagConstraints.NONE;
         inputPanel.add(saveDeckButton, gbc);
+
+        gbc.gridx = 1; // Position the edit button next to the save button
+        inputPanel.add(editDeckNameButton, gbc);
 
         // Add flashcard fields and buttons
         JLabel questionLabel = new JLabel("Question:");
@@ -214,6 +224,7 @@ public class FlashcardManager {
         addFlashcardButton.setEnabled(false);  // Initially disable the add flashcard button
 
         gbc.gridy = 3;
+        gbc.gridx = 0;
         gbc.gridwidth = 2;
         inputPanel.add(questionLabel, gbc);
 
@@ -228,7 +239,7 @@ public class FlashcardManager {
         inputPanel.add(answerField, gbc);
 
         gbc.gridy = 7;
-        gbc.gridwidth = 1;
+        gbc.gridwidth = 2;
         gbc.fill = GridBagConstraints.NONE;
         inputPanel.add(addFlashcardButton, gbc);
 
@@ -259,7 +270,7 @@ public class FlashcardManager {
 
             public void enableButtons() {
                 boolean isDeckNameEntered = !deckNameField.getText().isEmpty();
-                addFlashcardButton.setEnabled(isDeckNameEntered);
+//                addFlashcardButton.setEnabled(isDeckNameEntered);
                 saveDeckButton.setEnabled(isDeckNameEntered);
             }
         });
@@ -297,12 +308,14 @@ public class FlashcardManager {
             });
         });
 
+        JLabel deckNameLabel = new JLabel();
         saveDeckButton.addActionListener(e -> {
             SwingUtilities.invokeLater(() -> {
                 String deckName = deckNameField.getText();
                 if (!deckName.isEmpty()) {
                     // Add deck to map
                     decks.put(deckName, deck);
+                    currentDeckName = deckName; // Set current deck name
                     System.out.println("Decks map before saving: " + decks); // Debugging statement
 
                     // Save decks to file
@@ -313,7 +326,7 @@ public class FlashcardManager {
                     JOptionPane.showMessageDialog(panel, "Deck \"" + deckName + "\" Saved!");
 
                     // Clear the text fields and disable components
-                    JLabel deckNameLabel = new JLabel("Deck name: " + deckName);
+                    deckNameLabel.setText("Deck name: " + deckName);
                     deckNameLabel.setBackground(Color.DARK_GRAY);
                     deckNameLabel.setForeground(Color.WHITE);
                     deckNameLabel.setFont(new Font("Arial", Font.BOLD, 30));
@@ -323,12 +336,17 @@ public class FlashcardManager {
                     inputPanel.remove(saveDeckButton);
                     inputPanel.remove(askDeckName);
                     inputPanel.add(deckNameLabel);
+
+                    // Ensure layout is updated
                     inputPanel.revalidate();
                     inputPanel.repaint();
 
                     addFlashcardButton.setEnabled(true);
                     flashcardDisplay.setText("");
                     deck.clear();
+
+                    // Show the edit button
+                    editDeckNameButton.setEnabled(true);
 
                     // Refresh the other panels to show the new deck
                     updateAllPanels();
@@ -338,9 +356,69 @@ public class FlashcardManager {
             });
         });
 
+        editDeckNameButton.addActionListener(e -> {
+            SwingUtilities.invokeLater(() -> {
+                // Clear the inputPanel
+                inputPanel.remove(deckNameField);
+                inputPanel.remove(saveDeckButton);
+                inputPanel.remove(askDeckName);
+                inputPanel.remove(deckNameLabel);
+                inputPanel.remove(editDeckNameButton);
+
+                // Re-add components for editing
+                gbc.gridx = 0;
+                gbc.gridy = 0;
+                gbc.gridwidth = 2;
+                gbc.fill = GridBagConstraints.HORIZONTAL;
+                inputPanel.add(askDeckName, gbc);
+
+                gbc.gridy = 1;
+                inputPanel.add(deckNameField, gbc);
+
+                gbc.gridy = 2;
+                gbc.gridwidth = 1;
+                gbc.fill = GridBagConstraints.NONE;
+                inputPanel.add(saveDeckButton, gbc);
+
+                gbc.gridx = 1; // Position the edit button next to the save button
+
+//
+//                // Update the layout
+                inputPanel.revalidate();
+                inputPanel.repaint();
+//
+//                // Enable the save button for renaming
+                saveDeckButton.setText("Save New Deck Name");
+                saveDeckButton.setEnabled(true);
+
+
+                // Action for saving the new deck name
+                saveDeckButton.addActionListener(ev -> {
+                    String newDeckName = deckNameField.getText();
+                    if (!newDeckName.isEmpty()) {
+                        // Remove the old deck and add it with the new name
+                        if (decks.containsKey(currentDeckName)) {
+                            ArrayList<Flashcard> existingDeck = decks.remove(currentDeckName);
+                            decks.put(newDeckName, existingDeck);
+                            DataManager.saveDecks(decks);
+                            JOptionPane.showMessageDialog(panel, "Deck name updated to \"" + newDeckName + "\"!");
+                            inputPanel.add(editDeckNameButton, gbc);
+                            // Refresh the panels to reflect the name change
+                            updateAllPanels();
+                        }
+                    } else {
+                        JOptionPane.showMessageDialog(panel, "Please enter a new deck name.");
+                    }
+                });
+            });
+        });
 
         return panel;
     }
+
+
+
+
 
 
     private static JPanel createStudyPanel() {
@@ -715,93 +793,90 @@ public class FlashcardManager {
         return panel;
     }
 
-
-
-    // Returns a JPanel for deleting a deck
     private static JPanel createDeletePanel() {
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBackground(Color.DARK_GRAY);
 
-        // Create and add the back button panel at the top
+        // Create a panel to hold the back button and label
+        JPanel topPanel = new JPanel(new BorderLayout());
+        topPanel.setBackground(Color.DARK_GRAY);
+
+        // Create and add the back button
         JPanel backButtonPanel = createBackButtonPanel("TitleScreen");
-        panel.add(backButtonPanel, BorderLayout.NORTH);
+        topPanel.add(backButtonPanel, BorderLayout.WEST);
 
-        // Create a panel for the label with fixed height
-        JPanel labelPanel = new JPanel();
-        labelPanel.setBackground(Color.DARK_GRAY);
-        labelPanel.setPreferredSize(new Dimension(400, 50)); // Adjust height as needed
+        // Create a panel to center the label
+        JPanel centerPanel = new JPanel();
+        centerPanel.setOpaque(false); // Make the panel transparent
 
-        JLabel label = new JLabel("Select a deck to delete.");
+        // Create and add the label
+        JLabel label = new JLabel("Select decks to delete.");
         label.setForeground(Color.WHITE);
         label.setFont(new Font("Arial", Font.BOLD, 30));
-        label.setHorizontalAlignment(SwingConstants.CENTER);
 
-        labelPanel.add(label);
+        // Use BoxLayout to center the label horizontally
+        centerPanel.setLayout(new BoxLayout(centerPanel, BoxLayout.X_AXIS));
+        centerPanel.add(Box.createHorizontalGlue()); // Push label to the center
+        centerPanel.add(label);
+        centerPanel.add(Box.createHorizontalGlue()); // Push label to the center
 
-        // Create a panel for the deck buttons using GridLayout
-        JPanel deckButtonPanel = new JPanel(new GridLayout(0, 1, 10, 10)); // 1 column, variable rows
-        deckButtonPanel.setBackground(Color.DARK_GRAY);
+        topPanel.add(centerPanel, BorderLayout.CENTER);
 
-        // Add buttons to the deckButtonPanel
+        // Add the topPanel to the NORTH of the main panel
+        panel.add(topPanel, BorderLayout.NORTH);
+
+        // Create a panel for the deck checkboxes using GridLayout
+        JPanel deckCheckboxPanel = new JPanel(new GridLayout(0, 1, 10, 10)); // 1 column, variable rows
+        deckCheckboxPanel.setBackground(Color.DARK_GRAY);
+
+        // Map to keep track of checkboxes and associated deck names
+        Map<JCheckBox, String> checkBoxDeckMap = new HashMap<>();
+
+        // Add checkboxes for each deck
         for (String deckName : decks.keySet()) {
-            JButton deckButton = createStyledButton(deckName);
-            deckButton.addActionListener(e -> {
-                int response = JOptionPane.showConfirmDialog(deckButtonPanel, "Are you sure you want to delete the deck \"" +
-                        deckName + "\"?", "Confirm Delete", JOptionPane.YES_NO_OPTION);
-
-                if (response == JOptionPane.YES_OPTION) {
-                    // Remove the deck
-                    decks.remove(deckName);
-                    DataManager.saveDecks(decks);
-                    JOptionPane.showMessageDialog(deckButtonPanel, "Deck \"" + deckName + "\" deleted!");
-
-                    // Update the deck buttons after deletion
-                    updateDeleteDeckButtons(deckButtonPanel);
-                }
-            });
-            deckButtonPanel.add(deckButton);
+            JCheckBox deckCheckBox = new JCheckBox(deckName);
+            deckCheckBox.setBackground(Color.DARK_GRAY);
+            deckCheckBox.setForeground(Color.WHITE);
+            deckCheckBox.setFont(new Font("Arial", Font.PLAIN, 20));
+            checkBoxDeckMap.put(deckCheckBox, deckName);
+            deckCheckboxPanel.add(deckCheckBox);
         }
 
-        // Wrap the deckButtonPanel in a scroll pane
-        JScrollPane scrollPane = new JScrollPane(deckButtonPanel);
+        // Wrap the deckCheckboxPanel in a scroll pane
+        JScrollPane scrollPane = new JScrollPane(deckCheckboxPanel);
         scrollPane.setPreferredSize(new Dimension(400, 400));
 
-        // Add the label panel and scroll pane to the centerPanel
-        JPanel centerPanel = new JPanel(new BorderLayout());
-        centerPanel.setBackground(Color.DARK_GRAY);
-        centerPanel.add(labelPanel, BorderLayout.NORTH);
-        centerPanel.add(scrollPane, BorderLayout.CENTER);
+        // Add a delete button at the bottom
+        JButton deleteButton = createStyledButton("Delete Selected Decks");
+        deleteButton.addActionListener(e -> {
+            int response = JOptionPane.showConfirmDialog(panel,
+                    "Are you sure you want to delete the selected decks?",
+                    "Confirm Delete", JOptionPane.YES_NO_OPTION);
 
-        // Add the centerPanel to the main panel
-        panel.add(centerPanel, BorderLayout.CENTER);
+            if (response == JOptionPane.YES_OPTION) {
+                // Iterate through the checkboxes and delete selected decks
+                for (Map.Entry<JCheckBox, String> entry : checkBoxDeckMap.entrySet()) {
+                    if (entry.getKey().isSelected()) {
+                        decks.remove(entry.getValue());
+                        updateAllPanels(); // Ensure all panels are updated after deletion
+                    }
+                }
+                DataManager.saveDecks(decks);
+                JOptionPane.showMessageDialog(panel, "Selected decks deleted!");
+            }
+        });
+
+        // Add the scroll pane and delete button to the centerPanel
+        JPanel centerPanel2 = new JPanel(new BorderLayout());
+        centerPanel2.setBackground(Color.DARK_GRAY);
+        centerPanel2.add(scrollPane, BorderLayout.CENTER);
+        centerPanel2.add(deleteButton, BorderLayout.SOUTH);
+
+        // Add the centerPanel2 to the main panel
+        panel.add(centerPanel2, BorderLayout.CENTER);
 
         return panel;
     }
-
-    private static void updateDeleteDeckButtons(JPanel deckButtonPanel) {
-        deckButtonPanel.removeAll(); // Clear existing buttons
-
-        for (String deckName : decks.keySet()) {
-            JButton deckButton = createStyledButton(deckName);
-            deckButton.addActionListener(e -> {
-                int response = JOptionPane.showConfirmDialog(deckButtonPanel, "Are you sure you want to delete the deck \"" +
-                        deckName + "\"?", "Confirm Delete", JOptionPane.YES_NO_OPTION);
-
-                if (response == JOptionPane.YES_OPTION) {
-                    decks.remove(deckName);
-                    DataManager.saveDecks(decks);
-                    JOptionPane.showMessageDialog(deckButtonPanel, "Deck \"" + deckName + "\" deleted!");
-                    updateDeleteDeckButtons(deckButtonPanel); // Refresh deck list
-                }
-            });
-
-            deckButtonPanel.add(deckButton);
-        }
-
-        deckButtonPanel.revalidate();
-        deckButtonPanel.repaint();
-    }
-
 
 
     private static void updateAllPanels() {
