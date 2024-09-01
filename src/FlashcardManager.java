@@ -1,12 +1,7 @@
 import javax.swing.*;
-import javax.swing.border.Border;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import java.awt.*;
-import java.awt.event.ActionListener;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -72,7 +67,7 @@ public class FlashcardManager {
 
     // extends JPanel, meant to give background image to title screen
     public static class ImagePanel extends JPanel {
-        private Image backgroundImage;
+        private final Image backgroundImage;
 
         public ImagePanel(String imagePath) {
             backgroundImage = new ImageIcon(imagePath).getImage();
@@ -177,7 +172,7 @@ public class FlashcardManager {
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBackground(Color.DARK_GRAY);
 
-        JPanel backButtonPanel = createBackButtonPanel("TitleScreen");
+        JPanel backButtonPanel = createBackButtonPanel();
         panel.add(backButtonPanel, BorderLayout.NORTH);
 
         // Create a container for input fields and buttons
@@ -270,15 +265,15 @@ public class FlashcardManager {
         // Enable flashcard fields and buttons after deck name is entered
         deckNameField.getDocument().addDocumentListener(new DocumentListener() {
             public void changedUpdate(DocumentEvent e) {
-                SwingUtilities.invokeLater(() -> enableButtons());
+                SwingUtilities.invokeLater(this::enableButtons);
             }
 
             public void removeUpdate(DocumentEvent e) {
-                SwingUtilities.invokeLater(() -> enableButtons());
+                SwingUtilities.invokeLater(this::enableButtons);
             }
 
             public void insertUpdate(DocumentEvent e) {
-                SwingUtilities.invokeLater(() -> enableButtons());
+                SwingUtilities.invokeLater(this::enableButtons);
             }
 
             public void enableButtons() {
@@ -291,141 +286,135 @@ public class FlashcardManager {
         // Current deck
         ArrayList<Flashcard> deck = new ArrayList<>();
         // Actions for adding flashcards and saving the deck
-        addFlashcardButton.addActionListener(e -> {
-            SwingUtilities.invokeLater(() -> {
-                String question = questionField.getText();
-                String answer = answerField.getText();
-                int response = 0;
-                if (!question.isEmpty() && !answer.isEmpty()) {
-                    Flashcard flashcard = new Flashcard(question.trim(), answer.trim());
-                    if (!deck.contains(flashcard)) {
-                        deck.add(flashcard);
-                    } else {
-                        response = JOptionPane.showConfirmDialog(panel, "This flashcard already exists. " +
-                                "Would you like to add it again?");
-                    }
-
-                    // Update JTextArea to display the added flashcard
-                    if (response == JOptionPane.YES_OPTION || !deck.contains(flashcard)) {
-                        flashcardDisplay.append("Question: " + flashcard.getQuestion() + "\nAnswer: " +
-                                flashcard.getAnswer() + "\n\n");
-
-                        JOptionPane.showMessageDialog(panel, "Flashcard Added!");
-                        questionField.setText("");
-                        answerField.setText("");
-                    }
-                    DataManager.saveDecks(decks);
+        addFlashcardButton.addActionListener(e -> SwingUtilities.invokeLater(() -> {
+            String question = questionField.getText();
+            String answer = answerField.getText();
+            int response = 0;
+            if (!question.isEmpty() && !answer.isEmpty()) {
+                Flashcard flashcard = new Flashcard(question.trim(), answer.trim());
+                if (!deck.contains(flashcard)) {
+                    deck.add(flashcard);
                 } else {
-                    JOptionPane.showMessageDialog(panel, "Please enter both question and answer.");
+                    response = JOptionPane.showConfirmDialog(panel, "This flashcard already exists. " +
+                            "Would you like to add it again?");
                 }
-                System.out.println(deck);
-            });
-        });
+
+                // Update JTextArea to display the added flashcard
+                if (response == JOptionPane.YES_OPTION || !deck.contains(flashcard)) {
+                    flashcardDisplay.append("Question: " + flashcard.getQuestion() + "\nAnswer: " +
+                            flashcard.getAnswer() + "\n\n");
+
+                    JOptionPane.showMessageDialog(panel, "Flashcard Added!");
+                    questionField.setText("");
+                    answerField.setText("");
+                }
+                DataManager.saveDecks(decks);
+            } else {
+                JOptionPane.showMessageDialog(panel, "Please enter both question and answer.");
+            }
+            System.out.println(deck);
+        }));
 
         JLabel deckNameLabel = new JLabel();
         // Action for saving deck
-        saveDeckButton.addActionListener(e -> {
-            SwingUtilities.invokeLater(() -> {
-                String deckName = deckNameField.getText();
-                if (!deckName.isEmpty()) {
-                    // Add deck to map
-                    decks.put(deckName, deck);
-                    currentDeckName = deckName; // Set current deck name
-                    System.out.println("Decks map before saving: " + decks); // Debugging statement
+        saveDeckButton.addActionListener(e -> SwingUtilities.invokeLater(() -> {
+            String deckName = deckNameField.getText();
+            if (!deckName.isEmpty()) {
+                // Add deck to map
+                decks.put(deckName, deck);
+                currentDeckName = deckName; // Set current deck name
+                System.out.println("Decks map before saving: " + decks); // Debugging statement
 
-                    // Save decks to file
-                    DataManager.saveDecks(decks);
-                    System.out.println("Decks saved to file."); // Debugging statement
+                // Save decks to file
+                DataManager.saveDecks(decks);
+                System.out.println("Decks saved to file."); // Debugging statement
 
-                    // Notify user with deck name
-                    JOptionPane.showMessageDialog(panel, "Deck \"" + deckName + "\" Saved!");
+                // Notify user with deck name
+                JOptionPane.showMessageDialog(panel, "Deck \"" + deckName + "\" Saved!");
 
-                    // Clear the text fields and disable components
-                    deckNameLabel.setText("Deck name: " + deckName);
-                    deckNameLabel.setBackground(Color.DARK_GRAY);
-                    deckNameLabel.setForeground(Color.WHITE);
-                    deckNameLabel.setFont(new Font("Arial", Font.BOLD, 30));
+                // Clear the text fields and disable components
+                deckNameLabel.setText("Deck name: " + deckName);
+                deckNameLabel.setBackground(Color.DARK_GRAY);
+                deckNameLabel.setForeground(Color.WHITE);
+                deckNameLabel.setFont(new Font("Arial", Font.BOLD, 30));
 
-                    // Remove deck name field
-                    inputPanel.remove(deckNameField);
-                    inputPanel.remove(saveDeckButton);
-                    inputPanel.remove(askDeckName);
-                    inputPanel.add(deckNameLabel);
-
-                    // Ensure layout is updated
-                    inputPanel.revalidate();
-                    inputPanel.repaint();
-
-                    addFlashcardButton.setEnabled(true);
-                    deck.clear();
-
-                    // Show the edit button
-                    editDeckNameButton.setEnabled(true);
-
-                    // Refresh the other panels to show the new deck
-                    updateAllPanels();
-                } else {
-                    JOptionPane.showMessageDialog(panel, "Please enter a deck name.");
-                }
-            });
-        });
-
-        // Action for editing deck name on create panel
-        editDeckNameButton.addActionListener(e -> {
-            SwingUtilities.invokeLater(() -> {
-                // Clear the inputPanel
+                // Remove deck name field
                 inputPanel.remove(deckNameField);
                 inputPanel.remove(saveDeckButton);
                 inputPanel.remove(askDeckName);
-                inputPanel.remove(deckNameLabel);
-                inputPanel.remove(editDeckNameButton);
+                inputPanel.add(deckNameLabel);
 
-                // Re-add components for editing
-                gbc.gridx = 0;
-                gbc.gridy = 0;
-                gbc.gridwidth = 2;
-                gbc.fill = GridBagConstraints.HORIZONTAL;
-                inputPanel.add(askDeckName, gbc);
-
-                gbc.gridy = 1;
-                inputPanel.add(deckNameField, gbc);
-
-                gbc.gridy = 2;
-                gbc.gridwidth = 1;
-                gbc.fill = GridBagConstraints.NONE;
-                inputPanel.add(saveDeckButton, gbc);
-
-                gbc.gridx = 1; // Position the edit button next to the save button
-
-                // Update the layout
+                // Ensure layout is updated
                 inputPanel.revalidate();
                 inputPanel.repaint();
 
-                // Enable the save button for renaming
-                saveDeckButton.setText("Save New Deck Name");
-                saveDeckButton.setEnabled(true);
+                addFlashcardButton.setEnabled(true);
+                deck.clear();
+
+                // Show the edit button
+                editDeckNameButton.setEnabled(true);
+
+                // Refresh the other panels to show the new deck
+                updateAllPanels();
+            } else {
+                JOptionPane.showMessageDialog(panel, "Please enter a deck name.");
+            }
+        }));
+
+        // Action for editing deck name on create panel
+        editDeckNameButton.addActionListener(e -> SwingUtilities.invokeLater(() -> {
+            // Clear the inputPanel
+            inputPanel.remove(deckNameField);
+            inputPanel.remove(saveDeckButton);
+            inputPanel.remove(askDeckName);
+            inputPanel.remove(deckNameLabel);
+            inputPanel.remove(editDeckNameButton);
+
+            // Re-add components for editing
+            gbc.gridx = 0;
+            gbc.gridy = 0;
+            gbc.gridwidth = 2;
+            gbc.fill = GridBagConstraints.HORIZONTAL;
+            inputPanel.add(askDeckName, gbc);
+
+            gbc.gridy = 1;
+            inputPanel.add(deckNameField, gbc);
+
+            gbc.gridy = 2;
+            gbc.gridwidth = 1;
+            gbc.fill = GridBagConstraints.NONE;
+            inputPanel.add(saveDeckButton, gbc);
+
+            gbc.gridx = 1; // Position the edit button next to the save button
+
+            // Update the layout
+            inputPanel.revalidate();
+            inputPanel.repaint();
+
+            // Enable the save button for renaming
+            saveDeckButton.setText("Save New Deck Name");
+            saveDeckButton.setEnabled(true);
 
 
-                // Action for saving the new deck name
-                saveDeckButton.addActionListener(ev -> {
-                    String newDeckName = deckNameField.getText();
-                    if (!newDeckName.isEmpty()) {
-                        // Remove the old deck and add it with the new name
-                        if (decks.containsKey(currentDeckName)) {
-                            ArrayList<Flashcard> existingDeck = decks.remove(currentDeckName);
-                            decks.put(newDeckName, existingDeck);
-                            DataManager.saveDecks(decks);
-                            JOptionPane.showMessageDialog(panel, "Deck name updated to \"" + newDeckName + "\"!");
-                            inputPanel.add(editDeckNameButton, gbc);
-                            // Refresh the panels to reflect the name change
-                            updateAllPanels();
-                        }
-                    } else {
-                        JOptionPane.showMessageDialog(panel, "Please enter a new deck name.");
+            // Action for saving the new deck name
+            saveDeckButton.addActionListener(ev -> {
+                String newDeckName = deckNameField.getText();
+                if (!newDeckName.isEmpty()) {
+                    // Remove the old deck and add it with the new name
+                    if (decks.containsKey(currentDeckName)) {
+                        ArrayList<Flashcard> existingDeck = decks.remove(currentDeckName);
+                        decks.put(newDeckName, existingDeck);
+                        DataManager.saveDecks(decks);
+                        JOptionPane.showMessageDialog(panel, "Deck name updated to \"" + newDeckName + "\"!");
+                        inputPanel.add(editDeckNameButton, gbc);
+                        // Refresh the panels to reflect the name change
+                        updateAllPanels();
                     }
-                });
+                } else {
+                    JOptionPane.showMessageDialog(panel, "Please enter a new deck name.");
+                }
             });
-        });
+        }));
 
         return panel;
     }
@@ -438,7 +427,7 @@ public class FlashcardManager {
         JPanel northPanel = new JPanel(new BorderLayout());
         northPanel.setBackground(Color.DARK_GRAY);
 
-        JPanel backButtonPanel = createBackButtonPanel("TitleScreen");
+        JPanel backButtonPanel = createBackButtonPanel();
 
         JLabel label = new JLabel("Select a deck to study.");
         label.setHorizontalAlignment(SwingConstants.CENTER);
@@ -584,14 +573,14 @@ public class FlashcardManager {
 
 
     // Creates a "Back" button panel that can switch between screens
-    private static JPanel createBackButtonPanel(String targetScreen) {
+    private static JPanel createBackButtonPanel() {
         JPanel backButtonPanel = new JPanel(new BorderLayout());
         backButtonPanel.setBackground(Color.DARK_GRAY);
 
         JButton backButton = createStyledButton("Back");
         backButton.addActionListener(e -> {
             CardLayout cl = (CardLayout) cardPanel.getLayout();
-            cl.show(cardPanel, targetScreen);
+            cl.show(cardPanel, "TitleScreen");
         });
 
         backButtonPanel.add(backButton, BorderLayout.WEST);
@@ -604,7 +593,7 @@ public class FlashcardManager {
         panel.setBackground(Color.DARK_GRAY);
 
         // Create a panel for the back button
-        JPanel backButtonPanel = createBackButtonPanel("TitleScreen");
+        JPanel backButtonPanel = createBackButtonPanel();
         JButton backButton = (JButton) backButtonPanel.getComponent(0); // Assume the back button is the first component
         Dimension backButtonSize = backButton.getPreferredSize();
         int backButtonHeight = backButtonSize.height;
@@ -653,7 +642,7 @@ public class FlashcardManager {
                 JPanel northModifyPanel = new JPanel(new BorderLayout());
                 northModifyPanel.setBackground(Color.DARK_GRAY);
 
-                JPanel modifyDeckPanelBackButton = createBackButtonPanel("TitleScreen");
+                JPanel modifyDeckPanelBackButton = createBackButtonPanel();
                 northModifyPanel.add(modifyDeckPanelBackButton, BorderLayout.WEST);
 
                 JLabel titleLabel = new JLabel("Modify Deck: " + deckName, SwingConstants.CENTER);
@@ -851,7 +840,7 @@ public class FlashcardManager {
         topPanel.setBackground(Color.DARK_GRAY);
 
         // Create and add the back button
-        JPanel backButtonPanel = createBackButtonPanel("TitleScreen");
+        JPanel backButtonPanel = createBackButtonPanel();
         topPanel.add(backButtonPanel, BorderLayout.WEST);
 
         // Create a panel to center the label
