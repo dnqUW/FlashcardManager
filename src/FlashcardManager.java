@@ -746,10 +746,18 @@ public class FlashcardManager {
         for (String deckName : decks.keySet()) {
             JButton deckButton = createStyledButton(deckName);
             deckButton.addActionListener(e -> {
-                // Handle deck deletion here
-                decks.remove(deckName);
-                DataManager.saveDecks(decks);
-                updateDeleteDeckButtons(deckButtonPanel); // Refresh buttons after deletion
+                int response = JOptionPane.showConfirmDialog(deckButtonPanel, "Are you sure you want to delete the deck \"" +
+                        deckName + "\"?", "Confirm Delete", JOptionPane.YES_NO_OPTION);
+
+                if (response == JOptionPane.YES_OPTION) {
+                    // Remove the deck
+                    decks.remove(deckName);
+                    DataManager.saveDecks(decks);
+                    JOptionPane.showMessageDialog(deckButtonPanel, "Deck \"" + deckName + "\" deleted!");
+
+                    // Update the deck buttons after deletion
+                    updateDeleteDeckButtons(deckButtonPanel);
+                }
             });
             deckButtonPanel.add(deckButton);
         }
@@ -770,31 +778,30 @@ public class FlashcardManager {
         return panel;
     }
 
-    private static void updateDeleteDeckButtons(JPanel centerPanel) {
-        centerPanel.removeAll(); // Clear existing buttons
+    private static void updateDeleteDeckButtons(JPanel deckButtonPanel) {
+        deckButtonPanel.removeAll(); // Clear existing buttons
 
         for (String deckName : decks.keySet()) {
             JButton deckButton = createStyledButton(deckName);
             deckButton.addActionListener(e -> {
-                int response = JOptionPane.showConfirmDialog(centerPanel, "Are you sure you want to delete the deck \"" +
+                int response = JOptionPane.showConfirmDialog(deckButtonPanel, "Are you sure you want to delete the deck \"" +
                         deckName + "\"?", "Confirm Delete", JOptionPane.YES_NO_OPTION);
 
                 if (response == JOptionPane.YES_OPTION) {
                     decks.remove(deckName);
                     DataManager.saveDecks(decks);
-                    JOptionPane.showMessageDialog(centerPanel, "Deck \"" + deckName + "\" deleted!");
-                    updateDeleteDeckButtons(centerPanel); // Refresh deck list
-                    centerPanel.revalidate();
-                    centerPanel.repaint();
+                    JOptionPane.showMessageDialog(deckButtonPanel, "Deck \"" + deckName + "\" deleted!");
+                    updateDeleteDeckButtons(deckButtonPanel); // Refresh deck list
                 }
             });
 
-            centerPanel.add(deckButton);
+            deckButtonPanel.add(deckButton);
         }
 
-        centerPanel.revalidate();
-        centerPanel.repaint();
+        deckButtonPanel.revalidate();
+        deckButtonPanel.repaint();
     }
+
 
 
     private static void updateAllPanels() {
