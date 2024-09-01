@@ -594,7 +594,8 @@ public class FlashcardManager {
 
         // Create a panel for the back button
         JPanel backButtonPanel = createBackButtonPanel();
-        JButton backButton = (JButton) backButtonPanel.getComponent(0); // Assume the back button is the first component
+        // Assume the back button is the first component
+        JButton backButton = (JButton) backButtonPanel.getComponent(0);
         Dimension backButtonSize = backButton.getPreferredSize();
         int backButtonHeight = backButtonSize.height;
 
@@ -685,7 +686,8 @@ public class FlashcardManager {
                         editPanel.add(new JLabel("Edit Answer:"));
                         editPanel.add(newAnswerField);
 
-                        int result = JOptionPane.showConfirmDialog(null, editPanel, "Edit Flashcard", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+                        int result = JOptionPane.showConfirmDialog(null, editPanel, "Edit Flashcard",
+                                JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
                         if (result == JOptionPane.OK_OPTION) {
                             flashcard.setQuestion(newQuestionField.getText());
                             flashcard.setAnswer(newAnswerField.getText());
@@ -720,7 +722,8 @@ public class FlashcardManager {
                 // Action listener to Edit deck name
                 JButton editDeckNameButton = createStyledButton("Edit Deck Name");
                 editDeckNameButton.addActionListener(editNameEvent -> {
-                    String newDeckName = JOptionPane.showInputDialog(modifyPanel, "Enter a new name for the deck:", deckName);
+                    String newDeckName = JOptionPane.showInputDialog(modifyPanel, "Enter a new name for " +
+                            "the deck:", deckName);
                     if (newDeckName != null && !newDeckName.trim().isEmpty() && !newDeckName.equals(deckName)) {
                         if (!decks.containsKey(newDeckName)) {
                             ArrayList<Flashcard> tempDeck = decks.remove(deckName);
@@ -746,7 +749,8 @@ public class FlashcardManager {
                     inputPanel.add(new JLabel("Answer:"));
                     inputPanel.add(answerField);
 
-                    int result = JOptionPane.showConfirmDialog(modifyPanel, inputPanel, "Add Flashcard", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+                    int result = JOptionPane.showConfirmDialog(modifyPanel, inputPanel, "Add Flashcard",
+                            JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
                     if (result == JOptionPane.OK_OPTION) {
                         String question = questionField.getText();
                         String answer = answerField.getText();
@@ -764,6 +768,9 @@ public class FlashcardManager {
                                 JButton newDeleteButton = createStyledButton("Delete");
                                 // delete button action listener
                                 newDeleteButton.addActionListener(deleteEvent -> {
+                                    JOptionPane.showConfirmDialog(modifyPanel, "Are you sure you want to " +
+                                            "delete this flashcard?");
+
                                     deck.remove(newFlashcard);
                                     flashcardPanel.remove(flashcardEntry);
                                     flashcardPanel.revalidate();
@@ -780,7 +787,9 @@ public class FlashcardManager {
                                     editPanel.add(new JLabel("Edit Answer:"));
                                     editPanel.add(newAnswerField);
 
-                                    int editResult = JOptionPane.showConfirmDialog(null, editPanel, "Edit Flashcard", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+                                    int editResult = JOptionPane.showConfirmDialog(null, editPanel,
+                                            "Edit Flashcard", JOptionPane.OK_CANCEL_OPTION,
+                                            JOptionPane.PLAIN_MESSAGE);
                                     if (editResult == JOptionPane.OK_OPTION) {
                                         newFlashcard.setQuestion(newQuestionField.getText());
                                         newFlashcard.setAnswer(newAnswerField.getText());
@@ -864,7 +873,7 @@ public class FlashcardManager {
         panel.add(topPanel, BorderLayout.NORTH);
 
         // Create a panel for the deck checkboxes using GridLayout
-        JPanel deckCheckboxPanel = new JPanel(new GridLayout(0, 1, 10, 10)); // 1 column, variable rows
+        JPanel deckCheckboxPanel = new JPanel(new GridLayout(0, 1, 10, 10));
         deckCheckboxPanel.setBackground(Color.DARK_GRAY);
 
         // Map to keep track of checkboxes and associated deck names
