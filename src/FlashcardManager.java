@@ -69,21 +69,33 @@ public class FlashcardManager {
         frame.setVisible(true);
     }
 
+    public static class ImagePanel extends JPanel {
+        private Image backgroundImage;
 
+        public ImagePanel(String imagePath) {
+            backgroundImage = new ImageIcon(imagePath).getImage();
+            setLayout(new BorderLayout());
+        }
 
-    // Creates and returns the title page "Flashcard Manager"
+        @Override
+        protected void paintComponent(Graphics g) {
+            super.paintComponent(g);
+            g.drawImage(backgroundImage, 0, 0, getWidth(), getHeight(), this);
+        }
+    }
+
     private static JPanel createTitlePanel() {
-        JPanel panel = new JPanel(new BorderLayout());
-        panel.setBackground(Color.DARK_GRAY);
+        // Replace with the path to your background image
+        ImagePanel panel = new ImagePanel("./icons/flashcardmanagercover.png");
 
         // Title card initialization
         JLabel titleCard = new JLabel("Flashcard Manager", SwingConstants.CENTER);
-        titleCard.setForeground(Color.WHITE);
+        titleCard.setForeground(Color.BLACK);
         titleCard.setFont(new Font("Arial", Font.BOLD, 120));
         panel.add(titleCard, BorderLayout.CENTER);
 
         JPanel buttonPanel = new JPanel(new FlowLayout());
-        buttonPanel.setBackground(Color.DARK_GRAY);
+        buttonPanel.setBackground(new Color(0, 0, 0, 0)); // Transparent background for button panel
 
         // Create initial buttons for functionality
         JButton createButton = createStyledButton("Create");
@@ -133,8 +145,6 @@ public class FlashcardManager {
             cardPanel.repaint();
         });
 
-
-
         studyButton.addActionListener(e -> {
             System.out.println("Study button clicked");
             CardLayout cl = (CardLayout) cardPanel.getLayout();
@@ -153,11 +163,10 @@ public class FlashcardManager {
             cl.show(cardPanel, "DeleteDeckScreen");
         });
 
-
         panel.add(buttonPanel, BorderLayout.SOUTH);
         return panel;
-
     }
+
 
 
     private static JPanel createDeckPanel() {
@@ -342,7 +351,6 @@ public class FlashcardManager {
                     inputPanel.repaint();
 
                     addFlashcardButton.setEnabled(true);
-                    flashcardDisplay.setText("");
                     deck.clear();
 
                     // Show the edit button
@@ -416,11 +424,8 @@ public class FlashcardManager {
         return panel;
     }
 
-
-
-
-
-
+    // Creates the study panel, returns a JPanel and throws
+// Creates the study panel, returns a JPanel
     private static JPanel createStudyPanel() {
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBackground(Color.DARK_GRAY);
@@ -444,7 +449,6 @@ public class FlashcardManager {
         deckListPanel.setLayout(new GridLayout(0, 1, 10, 10));
         deckListPanel.setBackground(Color.DARK_GRAY);
 
-
         for (String deckName : decks.keySet()) {
             JButton deckButton = createStyledButton(deckName);
 
@@ -455,7 +459,7 @@ public class FlashcardManager {
                 JButton backButton = createStyledButton("Back");
                 backButton.addActionListener(backEvent -> {
                     CardLayout cl = (CardLayout) cardPanel.getLayout();
-                    cl.show(cardPanel, "TitleScreen"); // Adjust "TitleScreen" to your desired screen
+                    cl.show(cardPanel, "StudyDeckScreen"); // Go back to the deck list panel
                 });
 
                 JPanel backButtonPanelStudy = new JPanel(new BorderLayout());
@@ -490,7 +494,9 @@ public class FlashcardManager {
                 // Study deck logic
                 ArrayList<Flashcard> deck = decks.get(deckName);
                 Collections.shuffle(deck); // Shuffles the deck on every call
+                ArrayList<Flashcard> incorrectAnswers = new ArrayList<>();
                 int[] currentCardIndex = {0};
+
                 if (!deck.isEmpty()) {
                     displayFlashcard(deck, currentCardIndex, questionLabel);
                     cardPanel.add(studyPanel, "StudyPanel");
@@ -507,6 +513,22 @@ public class FlashcardManager {
                         answerField.setFont(new Font("Arial", Font.BOLD, 30));
                         answerField.setHorizontalAlignment(SwingConstants.CENTER);
                         answerField.setText(currentCard.getAnswer());
+                        JButton incorrectAnswerButton = createStyledButton("Incorrect Answer");
+
+                        buttonPanel.remove(showAnswerButton);
+                        buttonPanel.add(incorrectAnswerButton);
+
+
+                        incorrectAnswerButton.addActionListener(incorrectEvent -> {
+                            incorrectAnswers.add(currentCard);
+                            nextButton.doClick(); // Automatically move to the next card
+                            buttonPanel.add(showAnswerButton);
+                            buttonPanel.remove(incorrectAnswerButton);
+                        });
+
+
+                        buttonPanel.revalidate();
+                        buttonPanel.repaint();
                     } else {
                         JOptionPane.showMessageDialog(studyPanel, "No more cards in the deck!");
                     }
@@ -517,19 +539,26 @@ public class FlashcardManager {
                     if (currentCardIndex[0] < deck.size()) {
                         displayFlashcard(deck, currentCardIndex, questionLabel);
                         answerField.setText(""); // Clear the answer field
+                    } else if (!incorrectAnswers.isEmpty()) {
+                        // Replace the current deck with the incorrect answers
+                        deck.clear();
+                        deck.addAll(incorrectAnswers);
+                        incorrectAnswers.clear();
+                        currentCardIndex[0] = 0;
+                        JOptionPane.showMessageDialog(studyPanel, "Let's review the ones you got wrong.");
+                        buttonPanel.add(showAnswerButton);
+                        displayFlashcard(deck, currentCardIndex, questionLabel);
+                        answerField.setText(""); // Clear the answer field
                     } else {
-                        JOptionPane.showMessageDialog(studyPanel, "You have completed the deck!");
+                        // Navigate back to the deck list panel
                         CardLayout cl = (CardLayout) cardPanel.getLayout();
-                        cl.show(cardPanel, "TitleScreen"); // Adjust "TitleScreen" to your desired screen
+                        cl.show(cardPanel, "StudyDeckScreen");
                     }
                 });
-
             });
 
             deckListPanel.add(deckButton);
-
         }
-
 
         JScrollPane scrollPane = new JScrollPane(deckListPanel);
         scrollPane.setPreferredSize(new Dimension(400, 400));
@@ -537,6 +566,7 @@ public class FlashcardManager {
 
         return panel;
     }
+
 
 
 
