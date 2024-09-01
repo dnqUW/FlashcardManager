@@ -14,7 +14,7 @@ import java.util.Map;
 
 public class FlashcardManager {
     // Data structure to store flashcard decks
-    private static Map<String, ArrayList<Flashcard>> decks = new HashMap<>();
+    private static Map<String, ArrayList<Flashcard>> decks = new HashMap<>(); // Map of all decks
     private static JPanel cardPanel = new JPanel(new CardLayout()); // Panel for different screens
     private static JPanel studyPanel; // Study panel
     private static JPanel modifyPanel; // Modify panel
@@ -23,12 +23,13 @@ public class FlashcardManager {
     private static String currentDeckName = ""; // Current deck name
 
     public static void main(String[] args) {
-        try {
+        try { // to set the look and field across all platforms
             UIManager.setLookAndFeel(UIManager.getCrossPlatformLookAndFeelClassName());
         } catch (Exception e) {
             e.printStackTrace();
         }
 
+        // Creating the main frame
         JFrame frame = new JFrame("Flashcard Manager");
         frame.setLayout(new BorderLayout());
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -69,6 +70,7 @@ public class FlashcardManager {
         frame.setVisible(true);
     }
 
+    // extends JPanel, meant to give background image to title screen
     public static class ImagePanel extends JPanel {
         private Image backgroundImage;
 
@@ -84,6 +86,7 @@ public class FlashcardManager {
         }
     }
 
+    // Returns JPanel for the title panel
     private static JPanel createTitlePanel() {
         // Replace with the path to your background image
         ImagePanel panel = new ImagePanel("./icons/flashcardmanagercover.png");
@@ -169,6 +172,7 @@ public class FlashcardManager {
 
 
 
+    // Returns JPanel of the create deck panel
     private static JPanel createDeckPanel() {
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBackground(Color.DARK_GRAY);
@@ -284,6 +288,7 @@ public class FlashcardManager {
             }
         });
 
+        // Current deck
         ArrayList<Flashcard> deck = new ArrayList<>();
         // Actions for adding flashcards and saving the deck
         addFlashcardButton.addActionListener(e -> {
@@ -318,6 +323,7 @@ public class FlashcardManager {
         });
 
         JLabel deckNameLabel = new JLabel();
+        // Action for saving deck
         saveDeckButton.addActionListener(e -> {
             SwingUtilities.invokeLater(() -> {
                 String deckName = deckNameField.getText();
@@ -364,6 +370,7 @@ public class FlashcardManager {
             });
         });
 
+        // Action for editing deck name on create panel
         editDeckNameButton.addActionListener(e -> {
             SwingUtilities.invokeLater(() -> {
                 // Clear the inputPanel
@@ -390,12 +397,11 @@ public class FlashcardManager {
 
                 gbc.gridx = 1; // Position the edit button next to the save button
 
-//
-//                // Update the layout
+                // Update the layout
                 inputPanel.revalidate();
                 inputPanel.repaint();
-//
-//                // Enable the save button for renaming
+
+                // Enable the save button for renaming
                 saveDeckButton.setText("Save New Deck Name");
                 saveDeckButton.setEnabled(true);
 
@@ -424,8 +430,7 @@ public class FlashcardManager {
         return panel;
     }
 
-    // Creates the study panel, returns a JPanel and throws
-// Creates the study panel, returns a JPanel
+    // Creates the study panel, returns a JPanel
     private static JPanel createStudyPanel() {
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBackground(Color.DARK_GRAY);
@@ -452,11 +457,13 @@ public class FlashcardManager {
         for (String deckName : decks.keySet()) {
             JButton deckButton = createStyledButton(deckName);
 
+            // Action button for the decks on the list
             deckButton.addActionListener(e -> {
                 JPanel studyPanel = new JPanel(new BorderLayout());
                 studyPanel.setBackground(Color.DARK_GRAY);
 
                 JButton backButton = createStyledButton("Back");
+                // Back button listener
                 backButton.addActionListener(backEvent -> {
                     CardLayout cl = (CardLayout) cardPanel.getLayout();
                     cl.show(cardPanel, "StudyDeckScreen"); // Go back to the deck list panel
@@ -507,6 +514,7 @@ public class FlashcardManager {
                     return; // Exit the method if there are no cards
                 }
 
+                // Action listener to Show answer for each card
                 showAnswerButton.addActionListener(showAnswerEvent -> {
                     if (currentCardIndex[0] < deck.size()) {
                         Flashcard currentCard = deck.get(currentCardIndex[0]);
@@ -519,6 +527,7 @@ public class FlashcardManager {
                         buttonPanel.add(incorrectAnswerButton);
 
 
+                        // Action listener allows users to add incorrect cards to the end
                         incorrectAnswerButton.addActionListener(incorrectEvent -> {
                             incorrectAnswers.add(currentCard);
                             nextButton.doClick(); // Automatically move to the next card
@@ -534,6 +543,7 @@ public class FlashcardManager {
                     }
                 });
 
+                // Next button allows users to go to next card
                 nextButton.addActionListener(nextEvent -> {
                     currentCardIndex[0]++;
                     if (currentCardIndex[0] < deck.size()) {
@@ -708,6 +718,7 @@ public class FlashcardManager {
 
                 modifyPanel.add(scrollPane, BorderLayout.CENTER);
 
+                // Action to save changes when modifying
                 JButton saveChangesButton = createStyledButton("Save Changes");
                 saveChangesButton.addActionListener(saveEvent -> {
                     decks.put(deckName, deck);
@@ -717,6 +728,7 @@ public class FlashcardManager {
                     cl.show(cardPanel, "ModifyDeckScreen");
                 });
 
+                // Action listener to Edit deck name
                 JButton editDeckNameButton = createStyledButton("Edit Deck Name");
                 editDeckNameButton.addActionListener(editNameEvent -> {
                     String newDeckName = JOptionPane.showInputDialog(modifyPanel, "Enter a new name for the deck:", deckName);
@@ -734,6 +746,7 @@ public class FlashcardManager {
                     }
                 });
 
+                // Action listener to Add flashcard to deck
                 JButton addFlashcardButton = createStyledButton("Add Flashcard");
                 addFlashcardButton.addActionListener(addFlashcardEvent -> {
                     JTextField questionField = new JTextField();
@@ -760,6 +773,7 @@ public class FlashcardManager {
                                 JLabel newAnswerLabel = new JLabel("A: " + newFlashcard.getAnswer());
                                 newAnswerLabel.setFont(new Font("Arial", Font.PLAIN, 16));
                                 JButton newDeleteButton = createStyledButton("Delete");
+                                // delete button action listener
                                 newDeleteButton.addActionListener(deleteEvent -> {
                                     deck.remove(newFlashcard);
                                     flashcardPanel.remove(flashcardEntry);
@@ -767,6 +781,7 @@ public class FlashcardManager {
                                     flashcardPanel.repaint();
                                 });
                                 JButton newEditButton = createStyledButton("Edit");
+                                // new edit action listener
                                 newEditButton.addActionListener(editEvent -> {
                                     JTextField newQuestionField = new JTextField(newFlashcard.getQuestion());
                                     JTextField newAnswerField = new JTextField(newFlashcard.getAnswer());
@@ -826,6 +841,7 @@ public class FlashcardManager {
         return panel;
     }
 
+    // Returns JPanel and creates a new delete panel
     private static JPanel createDeletePanel() {
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBackground(Color.DARK_GRAY);
@@ -934,6 +950,7 @@ public class FlashcardManager {
     }
 
 
+    // Updates study panel. Catches exception if error occurs
     private static void updateStudyPanel() {
         try {
             if (studyPanel == null) {
@@ -957,7 +974,7 @@ public class FlashcardManager {
         }
     }
 
-
+    // Updates modify panel. Catches exception if error occurs
     private static void updateModifyPanel() {
         try {
             if (modifyPanel == null) {
@@ -981,7 +998,7 @@ public class FlashcardManager {
         }
     }
 
-
+    // Updates delete panel. Catches exception if error occurs
     private static void updateDeletePanel() {
         try {
             if (deletePanel == null) {
