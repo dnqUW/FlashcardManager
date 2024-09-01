@@ -249,7 +249,7 @@ public class FlashcardManager {
         gbc.gridy = 7;
         gbc.gridwidth = 2;
         gbc.fill = GridBagConstraints.NONE;
-        inputPanel.add(addFlashcardButton, gbc);
+
 
         // Creates a JTextArea to display added flashcards
         JTextArea flashcardDisplay = new JTextArea(10, 40);
@@ -343,6 +343,7 @@ public class FlashcardManager {
                 inputPanel.remove(saveDeckButton);
                 inputPanel.remove(askDeckName);
                 inputPanel.add(deckNameLabel);
+                inputPanel.add(addFlashcardButton, gbc);
 
                 // Ensure layout is updated
                 inputPanel.revalidate();
@@ -418,8 +419,6 @@ public class FlashcardManager {
 
         return panel;
     }
-
-    // Creates the study panel, returns a JPanel
     private static JPanel createStudyPanel() {
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBackground(Color.DARK_GRAY);
@@ -446,20 +445,18 @@ public class FlashcardManager {
         for (String deckName : decks.keySet()) {
             JButton deckButton = createStyledButton(deckName);
 
-            // Action button for the decks on the list
             deckButton.addActionListener(e -> {
+                // Create the study panel once and reuse it
                 JPanel studyPanel = new JPanel(new BorderLayout());
                 studyPanel.setBackground(Color.DARK_GRAY);
 
-                JButton backButton = createStyledButton("Back");
-                // Back button listener
-                backButton.addActionListener(backEvent -> {
-                    CardLayout cl = (CardLayout) cardPanel.getLayout();
-                    cl.show(cardPanel, "StudyDeckScreen"); // Go back to the deck list panel
-                });
-
                 JPanel backButtonPanelStudy = new JPanel(new BorderLayout());
                 backButtonPanelStudy.setBackground(Color.DARK_GRAY);
+                JButton backButton = createStyledButton("Back");
+                backButton.addActionListener(backEvent -> {
+                    CardLayout cl = (CardLayout) cardPanel.getLayout();
+                    cl.show(cardPanel, "StudyDeckScreen");
+                });
                 backButtonPanelStudy.add(backButton, BorderLayout.WEST);
 
                 JLabel questionLabel = new JLabel();
@@ -468,28 +465,41 @@ public class FlashcardManager {
                 questionLabel.setFont(new Font("Arial", Font.PLAIN, 20));
 
                 JTextField answerField = new JTextField(20);
-                answerField.setEditable(false); // Make answerField non-editable
+                answerField.setEditable(false);
+
                 JButton showAnswerButton = createStyledButton("Show Answer");
                 JButton nextButton = createStyledButton("Next");
+                JButton incorrectAnswerButton = createStyledButton("Incorrect Answer");
 
-                JPanel buttonPanel = new JPanel();
+                // Create a button panel with GridBagLayout
+                JPanel buttonPanel = new JPanel(new GridBagLayout());
                 buttonPanel.setBackground(Color.DARK_GRAY);
-                buttonPanel.add(showAnswerButton);
-                buttonPanel.add(nextButton);
+                GridBagConstraints gbc = new GridBagConstraints();
+                gbc.insets = new Insets(5, 5, 5, 5);
+                gbc.fill = GridBagConstraints.HORIZONTAL;
+                gbc.weightx = 0.5;
+                gbc.gridy = 0;
 
+                gbc.gridx = 0;
+                buttonPanel.add(showAnswerButton, gbc);
+
+                gbc.gridx = 1;
+                buttonPanel.add(nextButton, gbc);
+
+                // Center panel for question and answer field
                 JPanel centerPanel = new JPanel(new BorderLayout());
                 centerPanel.setBackground(Color.DARK_GRAY);
-                centerPanel.add(questionLabel, BorderLayout.NORTH); // Place questionLabel at the top
-                centerPanel.add(answerField, BorderLayout.CENTER); // Place answerField in the center
+                centerPanel.add(questionLabel, BorderLayout.NORTH);
+                centerPanel.add(answerField, BorderLayout.CENTER);
 
                 // Add components to the studyPanel
-                studyPanel.add(backButtonPanelStudy, BorderLayout.NORTH); // Back button at the top
-                studyPanel.add(centerPanel, BorderLayout.CENTER); // Center panel for question and answer field
-                studyPanel.add(buttonPanel, BorderLayout.SOUTH); // Button panel at the bottom
+                studyPanel.add(backButtonPanelStudy, BorderLayout.NORTH);
+                studyPanel.add(centerPanel, BorderLayout.CENTER);
+                studyPanel.add(buttonPanel, BorderLayout.SOUTH);
 
                 // Study deck logic
                 ArrayList<Flashcard> deck = decks.get(deckName);
-                Collections.shuffle(deck); // Shuffles the deck on every call
+                Collections.shuffle(deck);
                 ArrayList<Flashcard> incorrectAnswers = new ArrayList<>();
                 int[] currentCardIndex = {0};
 
@@ -500,30 +510,31 @@ public class FlashcardManager {
                     cl.show(cardPanel, "StudyPanel");
                 } else {
                     JOptionPane.showMessageDialog(studyPanel, "There are no cards in this deck.");
-                    return; // Exit the method if there are no cards
+                    return;
                 }
 
-                // Action listener to Show answer for each card
                 showAnswerButton.addActionListener(showAnswerEvent -> {
                     if (currentCardIndex[0] < deck.size()) {
                         Flashcard currentCard = deck.get(currentCardIndex[0]);
                         answerField.setFont(new Font("Arial", Font.BOLD, 30));
                         answerField.setHorizontalAlignment(SwingConstants.CENTER);
                         answerField.setText(currentCard.getAnswer());
-                        JButton incorrectAnswerButton = createStyledButton("Incorrect Answer");
 
-                        buttonPanel.remove(showAnswerButton);
-                        buttonPanel.add(incorrectAnswerButton);
+                        // Add Incorrect Answer button if not already added
+                        if (buttonPanel.getComponentCount() == 2) { // Only show "Incorrect Answer" button if not added yet
+                            gbc.gridx = 2;
+                            buttonPanel.add(incorrectAnswerButton, gbc);
+                            buttonPanel.revalidate();
+                            buttonPanel.repaint();
+                        }
 
-
-                        // Action listener allows users to add incorrect cards to the end
                         incorrectAnswerButton.addActionListener(incorrectEvent -> {
                             incorrectAnswers.add(currentCard);
-                            nextButton.doClick(); // Automatically move to the next card
-                            buttonPanel.add(showAnswerButton);
+                            nextButton.doClick();
                             buttonPanel.remove(incorrectAnswerButton);
+                            buttonPanel.revalidate();
+                            buttonPanel.repaint();
                         });
-
 
                         buttonPanel.revalidate();
                         buttonPanel.repaint();
@@ -532,27 +543,21 @@ public class FlashcardManager {
                     }
                 });
 
-                // Next button allows users to go to next card
                 nextButton.addActionListener(nextEvent -> {
                     currentCardIndex[0]++;
                     if (currentCardIndex[0] < deck.size()) {
                         displayFlashcard(deck, currentCardIndex, questionLabel);
-                        answerField.setText(""); // Clear the answer field
+                        answerField.setText("");
                     } else if (!incorrectAnswers.isEmpty()) {
-                        // Replace the current deck with the incorrect answers
                         deck.clear();
                         deck.addAll(incorrectAnswers);
                         incorrectAnswers.clear();
                         currentCardIndex[0] = 0;
-                        buttonPanel.add(showAnswerButton);
                         JOptionPane.showMessageDialog(studyPanel, "Let's review the ones you got wrong.");
                         displayFlashcard(deck, currentCardIndex, questionLabel);
-                        answerField.setText(""); // Clear the answer field
-                        buttonPanel.revalidate();
-                        buttonPanel.repaint();
+                        answerField.setText("");
                     } else {
-                        JOptionPane.showMessageDialog(studyPanel,"You've completed the deck!");
-                        // Navigate back to the deck list panel
+                        JOptionPane.showMessageDialog(studyPanel, "You've completed the deck!");
                         CardLayout cl = (CardLayout) cardPanel.getLayout();
                         cl.show(cardPanel, "StudyDeckScreen");
                     }
@@ -667,13 +672,23 @@ public class FlashcardManager {
                     answerLabel.setFont(new Font("Arial", Font.PLAIN, 16));
 
                     // Button to delete the flashcard
+                    // Button to delete the flashcard
                     JButton deleteButton = createStyledButton("Delete");
                     deleteButton.addActionListener(deleteEvent -> {
-                        deck.remove(flashcard);
-                        flashcardPanel.remove(flashcardEntry);
-                        flashcardPanel.revalidate();
-                        flashcardPanel.repaint();
+                        int confirm = JOptionPane.showConfirmDialog(modifyPanel,
+                                "Are you sure you want to delete this flashcard?",
+                                "Confirm Delete",
+                                JOptionPane.YES_NO_OPTION,
+                                JOptionPane.WARNING_MESSAGE);
+
+                        if (confirm == JOptionPane.YES_OPTION) {
+                            deck.remove(flashcard);
+                            flashcardPanel.remove(flashcardEntry);
+                            flashcardPanel.revalidate();
+                            flashcardPanel.repaint();
+                        }
                     });
+
 
                     // Button to edit the flashcard
                     JButton editButton = createStyledButton("Edit");
