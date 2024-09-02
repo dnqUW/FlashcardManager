@@ -460,18 +460,26 @@ public class FlashcardManager {
                 });
                 backButtonPanelStudy.add(backButton, BorderLayout.WEST);
 
-                JLabel questionLabel = new JLabel();
-                questionLabel.setHorizontalAlignment(SwingConstants.CENTER);
-                questionLabel.setForeground(Color.WHITE);
-                questionLabel.setFont(new Font("Arial", Font.PLAIN, 20));
+                // Use JTextArea for the question with wrapping
+                JTextArea questionArea = new JTextArea();
+                questionArea.setEditable(false);
+                questionArea.setWrapStyleWord(true);
+                questionArea.setLineWrap(true);
+                questionArea.setFont(new Font("Arial", Font.PLAIN, 20));
+                questionArea.setForeground(Color.WHITE);
+                questionArea.setBackground(Color.DARK_GRAY);
+                JScrollPane questionScrollPane = new JScrollPane(questionArea);
+                questionScrollPane.setPreferredSize(new Dimension(400, 100)); // Adjust size as needed
 
-                // Use JTextArea with wrapping enabled
-                JTextArea answerArea = new JTextArea(3, 20); // 3 rows, 20 columns
+                JTextArea answerArea = new JTextArea(3, 20);
                 answerArea.setEditable(false);
-                answerArea.setWrapStyleWord(true); // Wrap text by words
-                answerArea.setLineWrap(true); // Wrap text by lines
+                answerArea.setWrapStyleWord(true);
+                answerArea.setLineWrap(true);
+                answerArea.setFont(new Font("Arial", Font.PLAIN, 20));
+                answerArea.setForeground(Color.DARK_GRAY);
+                answerArea.setBackground(Color.WHITE);
                 JScrollPane answerScrollPane = new JScrollPane(answerArea);
-                answerScrollPane.setPreferredSize(new Dimension(300, 100)); // Adjust size as needed
+                answerScrollPane.setPreferredSize(new Dimension(300, 100));
 
                 JButton showAnswerButton = createStyledButton("Show Answer");
                 JButton nextButton = createStyledButton("Next");
@@ -497,8 +505,8 @@ public class FlashcardManager {
 
                 JPanel centerPanel = new JPanel(new BorderLayout());
                 centerPanel.setBackground(Color.DARK_GRAY);
-                centerPanel.add(questionLabel, BorderLayout.NORTH);
-                centerPanel.add(answerScrollPane, BorderLayout.CENTER); // Use scroll pane for answerArea
+                centerPanel.add(questionScrollPane, BorderLayout.NORTH); // Use scroll pane for questionArea
+                centerPanel.add(answerScrollPane, BorderLayout.CENTER);
 
                 studyPanel.add(backButtonPanelStudy, BorderLayout.NORTH);
                 studyPanel.add(centerPanel, BorderLayout.CENTER);
@@ -510,7 +518,7 @@ public class FlashcardManager {
                 int[] currentCardIndex = {0};
 
                 if (!deck.isEmpty()) {
-                    displayFlashcard(deck, currentCardIndex, questionLabel);
+                    displayFlashcard(deck, currentCardIndex, questionArea);
                     cardPanel.add(studyPanel, "StudyPanel");
                     CardLayout cl = (CardLayout) cardPanel.getLayout();
                     cl.show(cardPanel, "StudyPanel");
@@ -522,7 +530,6 @@ public class FlashcardManager {
                 showAnswerButton.addActionListener(showAnswerEvent -> {
                     if (currentCardIndex[0] < deck.size()) {
                         Flashcard currentCard = deck.get(currentCardIndex[0]);
-                        answerArea.setFont(new Font("Arial", Font.BOLD, 20));
                         answerArea.setText(currentCard.getAnswer());
 
                         if (buttonPanel.getComponentCount() == 3) { // Check if the Incorrect Answer button is already added
@@ -548,7 +555,7 @@ public class FlashcardManager {
                 nextButton.addActionListener(nextEvent -> {
                     currentCardIndex[0]++;
                     if (currentCardIndex[0] < deck.size()) {
-                        displayFlashcard(deck, currentCardIndex, questionLabel);
+                        displayFlashcard(deck, currentCardIndex, questionArea);
                         answerArea.setText("");
                     } else if (!incorrectAnswers.isEmpty()) {
                         deck.clear();
@@ -556,7 +563,7 @@ public class FlashcardManager {
                         incorrectAnswers.clear();
                         currentCardIndex[0] = 0;
                         JOptionPane.showMessageDialog(studyPanel, "Let's review the ones you got wrong.");
-                        displayFlashcard(deck, currentCardIndex, questionLabel);
+                        displayFlashcard(deck, currentCardIndex, questionArea);
                         answerArea.setText("");
                     } else {
                         JOptionPane.showMessageDialog(studyPanel, "You've completed the deck!");
@@ -1062,9 +1069,9 @@ public class FlashcardManager {
     }
 
     // Display the current flashcard
-    private static void displayFlashcard(ArrayList<Flashcard> deck, int[] currentCardIndex, JLabel questionLabel) {
+    private static void displayFlashcard(ArrayList<Flashcard> deck, int[] currentCardIndex, JTextArea textArea) {
         Flashcard currentCard = deck.get(currentCardIndex[0]);
-        questionLabel.setText("Question: " + currentCard.getQuestion());
+        textArea.setText("Question: " + currentCard.getQuestion());
     }
 
 }
