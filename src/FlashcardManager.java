@@ -495,13 +495,12 @@ public class FlashcardManager {
                 gbc.gridy = 0;
 
                 gbc.gridx = 0;
-                buttonPanel.add(showAnswerButton, gbc);
+                buttonPanel.add(showAnswerButton);
 
-                gbc.gridx = 1;
-                buttonPanel.add(nextButton, gbc);
+
+
 
                 gbc.gridx = 2;
-                buttonPanel.add(incorrectAnswerButton, gbc);
 
                 JPanel centerPanel = new JPanel(new BorderLayout());
                 centerPanel.setBackground(Color.DARK_GRAY);
@@ -512,7 +511,9 @@ public class FlashcardManager {
                 studyPanel.add(centerPanel, BorderLayout.CENTER);
                 studyPanel.add(buttonPanel, BorderLayout.SOUTH);
 
-                ArrayList<Flashcard> deck = decks.get(deckName);
+                // Make a copy of the deck to modify during the study session
+                ArrayList<Flashcard> originalDeck = new ArrayList<>(decks.get(deckName));
+                ArrayList<Flashcard> deck = new ArrayList<>(originalDeck);
                 Collections.shuffle(deck);
                 ArrayList<Flashcard> incorrectAnswers = new ArrayList<>();
                 int[] currentCardIndex = {0};
@@ -532,27 +533,35 @@ public class FlashcardManager {
                         Flashcard currentCard = deck.get(currentCardIndex[0]);
                         answerArea.setText(currentCard.getAnswer());
 
-                        if (buttonPanel.getComponentCount() == 3) { // Check if the Incorrect Answer button is already added
+                        // Check if the Incorrect Answer/ show answer button is already added
+                        if (buttonPanel.getComponentCount() < 3) {
+                            buttonPanel.add(incorrectAnswerButton);
+                            buttonPanel.remove(showAnswerButton);
+                            buttonPanel.add(nextButton);
                             buttonPanel.revalidate();
                             buttonPanel.repaint();
                         }
-
-                        incorrectAnswerButton.addActionListener(incorrectEvent -> {
-                            incorrectAnswers.add(currentCard);
-                            nextButton.doClick();
-                            buttonPanel.remove(incorrectAnswerButton);
-                            buttonPanel.revalidate();
-                            buttonPanel.repaint();
-                        });
-
-                        buttonPanel.revalidate();
-                        buttonPanel.repaint();
                     } else {
                         JOptionPane.showMessageDialog(studyPanel, "No more cards in the deck!");
                     }
                 });
 
+                incorrectAnswerButton.addActionListener(incorrectEvent -> {
+                    incorrectAnswers.add(deck.get(currentCardIndex[0]));
+                    nextButton.doClick();
+                    buttonPanel.remove(incorrectAnswerButton);
+                    buttonPanel.revalidate();
+                    buttonPanel.repaint();
+                });
+
                 nextButton.addActionListener(nextEvent -> {
+                    if (buttonPanel.getComponentCount() < 3) { // Check if the Incorrect Answer button is already added
+                        buttonPanel.removeAll();
+                        buttonPanel.add(showAnswerButton);
+                        buttonPanel.add(nextButton);
+                        buttonPanel.revalidate();
+                        buttonPanel.repaint();
+                    }
                     currentCardIndex[0]++;
                     if (currentCardIndex[0] < deck.size()) {
                         displayFlashcard(deck, currentCardIndex, questionArea);
@@ -575,6 +584,7 @@ public class FlashcardManager {
 
             deckListPanel.add(deckButton);
         }
+
 
         JScrollPane scrollPane = new JScrollPane(deckListPanel);
         scrollPane.setPreferredSize(new Dimension(400, 400));
