@@ -784,10 +784,22 @@ public class FlashcardManager {
                         int result = JOptionPane.showConfirmDialog(null, editPanel, "Edit Flashcard",
                                 JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
                         if (result == JOptionPane.OK_OPTION) {
-                            flashcard.setQuestion(newQuestionField.getText());
-                            flashcard.setAnswer(newAnswerField.getText());
-                            questionArea.setText("Q: " + flashcard.getQuestion());
-                            answerArea.setText("A: " + flashcard.getAnswer());
+                            if (!deck.contains(flashcard)) {
+                                flashcard.setQuestion(newQuestionField.getText());
+                                flashcard.setAnswer(newAnswerField.getText());
+                                questionArea.setText("Q: " + flashcard.getQuestion());
+                                answerArea.setText("A: " + flashcard.getAnswer());
+                            } else {
+                                int res = JOptionPane.showConfirmDialog(null, "This flashcard "
+                                        + "already exists. Are you sure you want to add this question?");
+                                if (res == JOptionPane.OK_OPTION) {
+                                    flashcard.setQuestion(newQuestionField.getText());
+                                    flashcard.setAnswer(newAnswerField.getText());
+                                    questionArea.setText("Q: " + flashcard.getQuestion());
+                                    answerArea.setText("A: " + flashcard.getAnswer());
+                                }
+                            }
+
                         }
                     });
 
