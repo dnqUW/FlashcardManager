@@ -632,6 +632,22 @@ public class FlashcardManager {
         return backButtonPanel;
     }
 
+    // Creates a "Back" button panel that can switch between screens
+    private static JPanel backButtonPreviousScreen(String previousScreen) {
+        JPanel backButtonPanel = new JPanel(new BorderLayout());
+        backButtonPanel.setBackground(Color.DARK_GRAY);
+
+        JButton backButton = createStyledButton("Back");
+        backButton.addActionListener(e -> {
+            CardLayout cl = (CardLayout) cardPanel.getLayout();
+            cl.show(cardPanel, previousScreen);
+        });
+
+        backButtonPanel.add(backButton, BorderLayout.WEST);
+        return backButtonPanel;
+    }
+
+
     // Returns a JPanel for deck modification
     private static JPanel createModifyPanel() {
         JPanel panel = new JPanel(new BorderLayout());
@@ -688,7 +704,7 @@ public class FlashcardManager {
                 JPanel northModifyPanel = new JPanel(new BorderLayout());
                 northModifyPanel.setBackground(Color.DARK_GRAY);
 
-                JPanel modifyDeckPanelBackButton = createBackButtonPanel();
+                JPanel modifyDeckPanelBackButton = backButtonPreviousScreen("ModifyDeckScreen");
                 northModifyPanel.add(modifyDeckPanelBackButton, BorderLayout.WEST);
 
                 JLabel titleLabel = new JLabel("Modify Deck: " + deckName, SwingConstants.CENTER);
@@ -705,14 +721,40 @@ public class FlashcardManager {
                 for (Flashcard flashcard : deck) {
                     JPanel flashcardEntry = new JPanel();
                     flashcardEntry.setBackground(Color.LIGHT_GRAY);
+                    flashcardEntry.setLayout(new BorderLayout());
 
-                    JLabel questionLabel = new JLabel("Q: " + flashcard.getQuestion());
-                    questionLabel.setFont(new Font("Arial", Font.PLAIN, 16));
-                    JLabel answerLabel = new JLabel("A: " + flashcard.getAnswer());
-                    answerLabel.setFont(new Font("Arial", Font.PLAIN, 16));
+                    JTextArea questionArea = new JTextArea("Q: " + flashcard.getQuestion());
+                    questionArea.setFont(new Font("Arial", Font.PLAIN, 16));
+                    questionArea.setLineWrap(true);
+                    questionArea.setWrapStyleWord(true);
+                    questionArea.setEditable(false);
+                    questionArea.setOpaque(false);
+                    questionArea.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 
-                    // Button to delete the flashcard
-                    // Button to delete the flashcard
+                    JTextArea answerArea = new JTextArea("A: " + flashcard.getAnswer());
+                    answerArea.setFont(new Font("Arial", Font.PLAIN, 16));
+                    answerArea.setLineWrap(true);
+                    answerArea.setWrapStyleWord(true);
+                    answerArea.setEditable(false);
+                    answerArea.setOpaque(false);
+                    answerArea.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+
+                    JPanel textPanel = new JPanel();
+                    textPanel.setLayout(new BoxLayout(textPanel, BoxLayout.Y_AXIS)); // Stack the text areas vertically
+                    textPanel.add(questionArea);
+                    textPanel.add(answerArea);
+
+                    // Update preferred size dynamically based on content
+                    questionArea.setPreferredSize(null);
+                    answerArea.setPreferredSize(null);
+
+                    questionArea.setSize(new Dimension(150, Short.MAX_VALUE));
+                    answerArea.setSize(new Dimension(150, Short.MAX_VALUE));
+
+                    questionArea.setPreferredSize(new Dimension(questionArea.getPreferredSize().width, questionArea.getPreferredSize().height));
+                    answerArea.setPreferredSize(new Dimension(answerArea.getPreferredSize().width, answerArea.getPreferredSize().height));
+
+                    // Buttons to delete and edit the flashcard
                     JButton deleteButton = createStyledButton("Delete");
                     deleteButton.addActionListener(deleteEvent -> {
                         int confirm = JOptionPane.showConfirmDialog(modifyPanel,
@@ -729,8 +771,6 @@ public class FlashcardManager {
                         }
                     });
 
-
-                    // Button to edit the flashcard
                     JButton editButton = createStyledButton("Edit");
                     editButton.addActionListener(editEvent -> {
                         JTextField newQuestionField = new JTextField(flashcard.getQuestion());
@@ -746,45 +786,45 @@ public class FlashcardManager {
                         if (result == JOptionPane.OK_OPTION) {
                             flashcard.setQuestion(newQuestionField.getText());
                             flashcard.setAnswer(newAnswerField.getText());
-                            questionLabel.setText("Q: " + flashcard.getQuestion());
-                            answerLabel.setText("A: " + flashcard.getAnswer());
+                            questionArea.setText("Q: " + flashcard.getQuestion());
+                            answerArea.setText("A: " + flashcard.getAnswer());
                         }
                     });
 
-                    flashcardEntry.add(questionLabel);
-                    flashcardEntry.add(answerLabel);
-                    flashcardEntry.add(editButton);
-                    flashcardEntry.add(deleteButton);
+                    JPanel buttonPanel = new JPanel();
+                    buttonPanel.add(editButton);
+                    buttonPanel.add(deleteButton);
+
+                    flashcardEntry.add(textPanel, BorderLayout.CENTER);
+                    flashcardEntry.add(buttonPanel, BorderLayout.EAST);
 
                     flashcardPanel.add(flashcardEntry);
                 }
+
 
                 JScrollPane scrollPane = new JScrollPane(flashcardPanel);
                 scrollPane.setPreferredSize(new Dimension(400, 400));
 
                 modifyPanel.add(scrollPane, BorderLayout.CENTER);
 
-                // Action to save changes when modifying
-                JButton saveChangesButton = createStyledButton("Save Changes");
-                saveChangesButton.addActionListener(saveEvent -> {
-                    decks.put(deckName, deck);
-                    DataManager.saveDecks(decks);
-                    JOptionPane.showMessageDialog(modifyPanel, "Deck changes saved!");
-                    CardLayout cl = (CardLayout) cardPanel.getLayout();
-                    cl.show(cardPanel, "ModifyDeckScreen");
-                });
-
                 // Action listener to Edit deck name
                 JButton editDeckNameButton = createStyledButton("Edit Deck Name");
                 editDeckNameButton.addActionListener(editNameEvent -> {
-                    String newDeckName = JOptionPane.showInputDialog(modifyPanel, "Enter a new name for " +
-                            "the deck:", deckName);
-                    if (newDeckName != null && !newDeckName.trim().isEmpty() && !newDeckName.equals(deckName)) {
+                    String newDeckName = JOptionPane.showInputDialog(modifyPanel, "Enter a new name for the deck:", deckName);
+                    if (newDeckName == null) {
+                        // User cancelled the dialog
+                        return;
+                    }
+
+                    newDeckName = newDeckName.trim(); // Trim whitespace
+
+                    if (!newDeckName.isEmpty() && !newDeckName.equals(deckName)) {
                         if (!decks.containsKey(newDeckName)) {
                             ArrayList<Flashcard> tempDeck = decks.remove(deckName);
                             decks.put(newDeckName, tempDeck);
                             titleLabel.setText("Modify Deck: " + newDeckName);
                             JOptionPane.showMessageDialog(modifyPanel, "Deck name updated successfully!");
+                            updateModifyPanel();
                         } else {
                             JOptionPane.showMessageDialog(modifyPanel, "A deck with this name already exists.");
                         }
@@ -792,6 +832,7 @@ public class FlashcardManager {
                         JOptionPane.showMessageDialog(modifyPanel, "Invalid name or same as current name.");
                     }
                 });
+
 
                 // Action listener to Add flashcard to deck
                 JButton addFlashcardButton = createStyledButton("Add Flashcard");
@@ -813,26 +854,40 @@ public class FlashcardManager {
                             Flashcard newFlashcard = new Flashcard(question.trim(), answer.trim());
                             if (!deck.contains(newFlashcard)) {
                                 deck.add(newFlashcard);
-                                // Update display
-                                JPanel flashcardEntry = new JPanel();
-                                flashcardEntry.setBackground(Color.LIGHT_GRAY);
-                                JLabel newQuestionLabel = new JLabel("Q: " + newFlashcard.getQuestion());
-                                newQuestionLabel.setFont(new Font("Arial", Font.PLAIN, 16));
-                                JLabel newAnswerLabel = new JLabel("A: " + newFlashcard.getAnswer());
-                                newAnswerLabel.setFont(new Font("Arial", Font.PLAIN, 16));
-                                JButton newDeleteButton = createStyledButton("Delete");
-                                // delete button action listener
-                                newDeleteButton.addActionListener(deleteEvent -> {
-                                    JOptionPane.showConfirmDialog(modifyPanel, "Are you sure you want to " +
-                                            "delete this flashcard?");
 
-                                    deck.remove(newFlashcard);
-                                    flashcardPanel.remove(flashcardEntry);
-                                    flashcardPanel.revalidate();
-                                    flashcardPanel.repaint();
+                                // Update display to match existing flashcards
+                                JPanel flashcardEntry = new JPanel(new BorderLayout());
+                                flashcardEntry.setBackground(Color.LIGHT_GRAY);
+                                flashcardEntry.setBorder(BorderFactory.createLineBorder(Color.GRAY)); // Match border style
+
+                                JPanel textPanel = new JPanel(new GridLayout(0, 1));
+                                textPanel.setBackground(Color.LIGHT_GRAY);
+
+                                JLabel newQuestionLabel = new JLabel("<html>Q: " + newFlashcard.getQuestion() + "</html>");
+                                newQuestionLabel.setFont(new Font("Arial", Font.PLAIN, 16));
+                                JLabel newAnswerLabel = new JLabel("<html>A: " + newFlashcard.getAnswer() + "</html>");
+                                newAnswerLabel.setFont(new Font("Arial", Font.PLAIN, 16));
+
+                                textPanel.add(newQuestionLabel);
+                                textPanel.add(newAnswerLabel);
+
+                                JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+                                buttonPanel.setBackground(Color.LIGHT_GRAY);
+
+                                JButton newDeleteButton = createStyledButton("Delete");
+                                newDeleteButton.addActionListener(deleteEvent -> {
+                                    int confirm = JOptionPane.showConfirmDialog(modifyPanel, "Are you sure you want to delete this flashcard?",
+                                            "Confirm Delete", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+                                    if (confirm == JOptionPane.YES_OPTION) {
+                                        deck.remove(newFlashcard);
+                                        flashcardPanel.remove(flashcardEntry);
+                                        flashcardPanel.revalidate();
+                                        flashcardPanel.repaint();
+                                        DataManager.saveDecks(decks); // Save changes
+                                    }
                                 });
+
                                 JButton newEditButton = createStyledButton("Edit");
-                                // new edit action listener
                                 newEditButton.addActionListener(editEvent -> {
                                     JTextField newQuestionField = new JTextField(newFlashcard.getQuestion());
                                     JTextField newAnswerField = new JTextField(newFlashcard.getAnswer());
@@ -842,24 +897,28 @@ public class FlashcardManager {
                                     editPanel.add(new JLabel("Edit Answer:"));
                                     editPanel.add(newAnswerField);
 
-                                    int editResult = JOptionPane.showConfirmDialog(null, editPanel,
-                                            "Edit Flashcard", JOptionPane.OK_CANCEL_OPTION,
-                                            JOptionPane.PLAIN_MESSAGE);
+                                    int editResult = JOptionPane.showConfirmDialog(null, editPanel, "Edit Flashcard",
+                                            JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
                                     if (editResult == JOptionPane.OK_OPTION) {
                                         newFlashcard.setQuestion(newQuestionField.getText());
                                         newFlashcard.setAnswer(newAnswerField.getText());
-                                        newQuestionLabel.setText("Q: " + newFlashcard.getQuestion());
-                                        newAnswerLabel.setText("A: " + newFlashcard.getAnswer());
+                                        newQuestionLabel.setText("<html>Q: " + newFlashcard.getQuestion() + "</html>");
+                                        newAnswerLabel.setText("<html>A: " + newFlashcard.getAnswer() + "</html>");
                                     }
                                 });
 
-                                flashcardEntry.add(newQuestionLabel);
-                                flashcardEntry.add(newAnswerLabel);
-                                flashcardEntry.add(newEditButton);
-                                flashcardEntry.add(newDeleteButton);
+                                buttonPanel.add(newEditButton);
+                                buttonPanel.add(newDeleteButton);
+
+                                flashcardEntry.add(textPanel, BorderLayout.CENTER);
+                                flashcardEntry.add(buttonPanel, BorderLayout.EAST);
+
                                 flashcardPanel.add(flashcardEntry);
                                 flashcardPanel.revalidate();
                                 flashcardPanel.repaint();
+
+                                // Save changes to the file
+                                DataManager.saveDecks(decks);
                             } else {
                                 JOptionPane.showMessageDialog(modifyPanel, "This flashcard already exists.");
                             }
@@ -869,11 +928,11 @@ public class FlashcardManager {
                     }
                 });
 
+
                 JPanel southPanel = new JPanel();
                 southPanel.setBackground(Color.DARK_GRAY);
                 southPanel.add(editDeckNameButton);
                 southPanel.add(addFlashcardButton);
-                southPanel.add(saveChangesButton);
 
                 modifyPanel.add(southPanel, BorderLayout.SOUTH);
 
