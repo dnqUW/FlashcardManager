@@ -2,6 +2,7 @@ import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import java.awt.*;
+import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -317,50 +318,56 @@ public class FlashcardManager {
 
         JLabel deckNameLabel = new JLabel();
         // Action for saving deck
-        saveDeckButton.addActionListener(e -> SwingUtilities.invokeLater(() -> {
+        saveDeckButton.addActionListener(e ->  {
             String deckName = deckNameField.getText();
-            if (!deckName.isEmpty()) {
-                // Add deck to map
-                decks.put(deckName, deck);
-                currentDeckName = deckName; // Set current deck name
-                System.out.println("Decks map before saving: " + decks); // Debugging statement
+            if(!decks.containsKey(deckName)) {
+                if (!deckName.isEmpty()) {
+                    // Add deck to map
+                    decks.put(deckName, deck);
+                    currentDeckName = deckName; // Set current deck name
+                    System.out.println("Decks map before saving: " + decks); // Debugging statement
 
-                // Save decks to file
-                DataManager.saveDecks(decks);
-                System.out.println("Decks saved to file."); // Debugging statement
+                    // Save decks to file
+                    DataManager.saveDecks(decks);
+                    System.out.println("Decks saved to file."); // Debugging statement
 
-                // Notify user with deck name
-                JOptionPane.showMessageDialog(panel, "Deck \"" + deckName + "\" Saved!");
+                    // Notify user with deck name
+                    JOptionPane.showMessageDialog(panel, "Deck \"" + deckName + "\" Saved!");
 
-                // Clear the text fields and disable components
-                deckNameLabel.setText("Deck name: " + deckName);
-                deckNameLabel.setBackground(Color.DARK_GRAY);
-                deckNameLabel.setForeground(Color.WHITE);
-                deckNameLabel.setFont(new Font("Arial", Font.BOLD, 30));
+                    // Clear the text fields and disable components
+                    deckNameLabel.setText("Deck name: " + deckName);
+                    deckNameLabel.setBackground(Color.DARK_GRAY);
+                    deckNameLabel.setForeground(Color.WHITE);
+                    deckNameLabel.setFont(new Font("Arial", Font.BOLD, 30));
 
-                // Remove deck name field
-                inputPanel.remove(deckNameField);
-                inputPanel.remove(saveDeckButton);
-                inputPanel.remove(askDeckName);
-                inputPanel.add(deckNameLabel);
-                inputPanel.add(addFlashcardButton, gbc);
+                    // Remove deck name field
+                    inputPanel.remove(deckNameField);
+                    inputPanel.remove(saveDeckButton);
+                    inputPanel.remove(askDeckName);
+                    inputPanel.add(deckNameLabel);
+                    inputPanel.add(addFlashcardButton, gbc);
 
-                // Ensure layout is updated
-                inputPanel.revalidate();
-                inputPanel.repaint();
+                    // Ensure layout is updated
+                    inputPanel.revalidate();
+                    inputPanel.repaint();
 
-                addFlashcardButton.setEnabled(true);
-                deck.clear();
+                    addFlashcardButton.setEnabled(true);
+                    deck.clear();
 
-                // Show the edit button
-                editDeckNameButton.setEnabled(true);
+                    // Show the edit button
+                    editDeckNameButton.setEnabled(true);
 
-                // Refresh the other panels to show the new deck
-                updateAllPanels();
+                    // Refresh the other panels to show the new deck
+                    updateAllPanels();
+                } else {
+                    JOptionPane.showMessageDialog(panel, "Please enter a deck name.");
+                }
             } else {
-                JOptionPane.showMessageDialog(panel, "Please enter a deck name.");
+                System.out.println("Fix this");
+                JOptionPane.showMessageDialog(panel, "Deck with this name already exists. Please " +
+                        "enter a new one.");
             }
-        }));
+        });
 
         // Action for editing deck name on create panel
         editDeckNameButton.addActionListener(e -> SwingUtilities.invokeLater(() -> {
@@ -396,26 +403,44 @@ public class FlashcardManager {
             saveDeckButton.setText("Save New Deck Name");
             saveDeckButton.setEnabled(true);
 
+            // Remove previous action listeners to avoid multiple triggers
+            for (ActionListener al : saveDeckButton.getActionListeners()) {
+                saveDeckButton.removeActionListener(al);
+            }
 
             // Action for saving the new deck name
             saveDeckButton.addActionListener(ev -> {
                 String newDeckName = deckNameField.getText();
                 if (!newDeckName.isEmpty()) {
-                    // Remove the old deck and add it with the new name
-                    if (decks.containsKey(currentDeckName)) {
-                        ArrayList<Flashcard> existingDeck = decks.remove(currentDeckName);
-                        decks.put(newDeckName, existingDeck);
+                    if (!decks.containsKey(newDeckName)) {
+                        ArrayList<Flashcard> oldFlashcards = decks.get(currentDeckName);
+                        decks.remove(currentDeckName);
+                        decks.put(newDeckName, oldFlashcards);
+                        currentDeckName = newDeckName;
+                        System.out.println("Current decks: " + decks);
                         DataManager.saveDecks(decks);
                         JOptionPane.showMessageDialog(panel, "Deck name updated to \"" + newDeckName + "\"!");
+
+                        // Update the deck name label and re-enable the edit button
+                        deckNameLabel.setText("Deck name: " + newDeckName);
+                        inputPanel.remove(saveDeckButton);
                         inputPanel.add(editDeckNameButton, gbc);
+
+                        // Refresh the layout
+                        inputPanel.revalidate();
+                        inputPanel.repaint();
+
                         // Refresh the panels to reflect the name change
                         updateAllPanels();
+                    } else {
+                        JOptionPane.showMessageDialog(panel, "Deck with this name already exists. Please enter a new one.");
                     }
                 } else {
                     JOptionPane.showMessageDialog(panel, "Please enter a new deck name.");
                 }
             });
         }));
+
 
         return panel;
     }
@@ -496,8 +521,6 @@ public class FlashcardManager {
 
                 gbc.gridx = 0;
                 buttonPanel.add(showAnswerButton);
-
-
 
 
                 gbc.gridx = 2;
