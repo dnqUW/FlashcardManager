@@ -1,6 +1,7 @@
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+import javax.xml.crypto.Data;
 import java.awt.*;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
@@ -97,25 +98,25 @@ public class FlashcardManager {
         buttonPanel.setBackground(new Color(0, 0, 0, 0)); // Transparent background for button panel
 
         // Create initial buttons for functionality
-        JButton createButton = createStyledButton("Create");
+        JButton createButton = createStyledButton("Create Deck");
         createButton.addActionListener(e -> {
             CardLayout cl = (CardLayout) cardPanel.getLayout();
             cl.show(cardPanel, "CreateDeckScreen");
         });
 
-        JButton studyButton = createStyledButton("Study");
+        JButton studyButton = createStyledButton("Study Deck");
         studyButton.addActionListener(e -> {
             CardLayout cl = (CardLayout) cardPanel.getLayout();
             cl.show(cardPanel, "StudyDeckScreen");
         });
 
-        JButton modifyButton = createStyledButton("Modify");
+        JButton modifyButton = createStyledButton("Modify Deck");
         modifyButton.addActionListener(e -> {
             CardLayout cl = (CardLayout) cardPanel.getLayout();
             cl.show(cardPanel, "ModifyDeckScreen");
         });
 
-        JButton deleteButton = createStyledButton("Delete");
+        JButton deleteButton = createStyledButton("Delete Deck");
         deleteButton.addActionListener(e -> {
             CardLayout cl = (CardLayout) cardPanel.getLayout();
             cl.show(cardPanel, "DeleteDeckScreen");
@@ -125,42 +126,6 @@ public class FlashcardManager {
         buttonPanel.add(studyButton);
         buttonPanel.add(modifyButton);
         buttonPanel.add(deleteButton);
-
-//        createButton.addActionListener(e -> {
-//            System.out.println("Create button clicked");
-//
-//            // Create a new panel
-//            JPanel newCreateDeckPanel = createDeckPanel();
-//
-//            // Add the new panel to cardPanel with an identifier
-//            cardPanel.add(newCreateDeckPanel, "CreateDeckScreen");
-//
-//            // Switch to the new panel
-//            CardLayout cl = (CardLayout) cardPanel.getLayout();
-//            cl.show(cardPanel, "CreateDeckScreen");
-//
-//            // Revalidate and repaint to ensure proper layout update
-//            cardPanel.revalidate();
-//            cardPanel.repaint();
-//        });
-//
-//        studyButton.addActionListener(e -> {
-//            System.out.println("Study button clicked");
-//            CardLayout cl = (CardLayout) cardPanel.getLayout();
-//            cl.show(cardPanel, "StudyDeckScreen");
-//        });
-//
-//        modifyButton.addActionListener(e -> {
-//            System.out.println("Modify button clicked");
-//            CardLayout cl = (CardLayout) cardPanel.getLayout();
-//            cl.show(cardPanel, "ModifyDeckScreen");
-//        });
-//
-//        deleteButton.addActionListener(e -> {
-//            System.out.println("Delete button clicked");
-//            CardLayout cl = (CardLayout) cardPanel.getLayout();
-//            cl.show(cardPanel, "DeleteDeckScreen");
-//        });
 
         panel.add(buttonPanel, BorderLayout.SOUTH);
         return panel;
@@ -768,8 +733,10 @@ public class FlashcardManager {
                             flashcardPanel.remove(flashcardEntry);
                             flashcardPanel.revalidate();
                             flashcardPanel.repaint();
+                            DataManager.saveDecks(decks);
                         }
                     });
+
 
                     JButton editButton = createStyledButton("Edit");
                     editButton.addActionListener(editEvent -> {
@@ -783,25 +750,65 @@ public class FlashcardManager {
 
                         int result = JOptionPane.showConfirmDialog(null, editPanel, "Edit Flashcard",
                                 JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+
                         if (result == JOptionPane.OK_OPTION) {
-                            if (!deck.contains(flashcard)) {
-                                flashcard.setQuestion(newQuestionField.getText());
-                                flashcard.setAnswer(newAnswerField.getText());
-                                questionArea.setText("Q: " + flashcard.getQuestion());
-                                answerArea.setText("A: " + flashcard.getAnswer());
-                            } else {
-                                int res = JOptionPane.showConfirmDialog(null, "This flashcard "
-                                        + "already exists. Are you sure you want to add this question?");
-                                if (res == JOptionPane.OK_OPTION) {
-                                    flashcard.setQuestion(newQuestionField.getText());
-                                    flashcard.setAnswer(newAnswerField.getText());
+                            String newQuestion = newQuestionField.getText().trim();
+                            String newAnswer = newAnswerField.getText().trim();
+
+                            if (!newQuestion.isEmpty() && !newAnswer.isEmpty()) {
+                                Flashcard updatedFlashcard = new Flashcard(newQuestion, newAnswer);
+
+                                boolean isDuplicate = false;
+                                for (Flashcard deckFlashcard : deck) {
+                                    if (deckFlashcard != flashcard && deckFlashcard.getQuestion().equalsIgnoreCase(updatedFlashcard.getQuestion())) {
+                                        isDuplicate = true;
+                                        break; // Exit loop if a duplicate is found
+                                    }
+                                }
+
+                                if (!isDuplicate) {
+                                    // Update the flashcard
+                                    flashcard.setQuestion(newQuestion);
+                                    flashcard.setAnswer(newAnswer);
+
+                                    // Update labels
                                     questionArea.setText("Q: " + flashcard.getQuestion());
                                     answerArea.setText("A: " + flashcard.getAnswer());
-                                }
-                            }
 
+                                    // Save changes to the file
+                                    DataManager.saveDecks(decks);
+
+                                    System.out.println("Flashcard updated.");
+                                } else {
+                                    // Show a dialog if a duplicate is found
+                                    int confirmResult = JOptionPane.showConfirmDialog(null,
+                                            "A flashcard with this question already exists. Do you still want to update it?",
+                                            "Duplicate Question", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+                                    if (confirmResult == JOptionPane.YES_OPTION) {
+                                        // Update the flashcard
+                                        flashcard.setQuestion(newQuestion);
+                                        flashcard.setAnswer(newAnswer);
+
+                                        // Update labels
+                                        questionArea.setText("Q: " + flashcard.getQuestion());
+                                        answerArea.setText("A: " + flashcard.getAnswer());
+
+                                        // Save changes to the file
+                                        DataManager.saveDecks(decks);
+
+                                        System.out.println("Flashcard updated.");
+                                    } else {
+                                        System.out.println("Modification canceled.");
+                                    }
+                                }
+                            } else {
+                                JOptionPane.showMessageDialog(null, "Question and answer cannot be empty.");
+                            }
+                        } else {
+                            System.out.println("Edit canceled.");
                         }
                     });
+
 
                     JPanel buttonPanel = new JPanel();
                     buttonPanel.add(editButton);
@@ -871,9 +878,20 @@ public class FlashcardManager {
                     if (result == JOptionPane.OK_OPTION) {
                         String question = questionField.getText();
                         String answer = answerField.getText();
+
                         if (!question.trim().isEmpty() && !answer.trim().isEmpty()) {
                             Flashcard newFlashcard = new Flashcard(question.trim(), answer.trim());
-                            if (!deck.contains(newFlashcard)) {
+
+                            // Check for duplicate questions in the deck
+                            boolean isDuplicate = false;
+                            for (Flashcard deckFlashcard : deck) {
+                                if (deckFlashcard.getQuestion().equalsIgnoreCase(newFlashcard.getQuestion())) {
+                                    isDuplicate = true;
+                                    break; // Exit loop if a duplicate is found
+                                }
+                            }
+
+                            if (!isDuplicate) {
                                 deck.add(newFlashcard);
 
                                 // Update display to match existing flashcards
@@ -884,9 +902,11 @@ public class FlashcardManager {
                                 JPanel textPanel = new JPanel(new GridLayout(0, 1));
                                 textPanel.setBackground(Color.LIGHT_GRAY);
 
-                                JLabel newQuestionLabel = new JLabel("<html>Q: " + newFlashcard.getQuestion() + "</html>");
+                                JLabel newQuestionLabel = new JLabel("<html>Q: " + newFlashcard.getQuestion()
+                                        + "</html>");
                                 newQuestionLabel.setFont(new Font("Arial", Font.PLAIN, 16));
-                                JLabel newAnswerLabel = new JLabel("<html>A: " + newFlashcard.getAnswer() + "</html>");
+                                JLabel newAnswerLabel = new JLabel("<html>A: " + newFlashcard.getAnswer()
+                                        + "</html>");
                                 newAnswerLabel.setFont(new Font("Arial", Font.PLAIN, 16));
 
                                 textPanel.add(newQuestionLabel);
@@ -919,16 +939,73 @@ public class FlashcardManager {
                                     editPanel.add(new JLabel("Edit Answer:"));
                                     editPanel.add(newAnswerField);
 
-
-                                    int editResult = JOptionPane.showConfirmDialog(null, editPanel, "Edit Flashcard",
+                                    int editResult = JOptionPane.showConfirmDialog(null, editPanel,
+                                            "Edit Flashcard",
                                             JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+
                                     if (editResult == JOptionPane.OK_OPTION) {
-                                        newFlashcard.setQuestion(newQuestionField.getText());
-                                        newFlashcard.setAnswer(newAnswerField.getText());
-                                        newQuestionLabel.setText("<html>Q: " + newFlashcard.getQuestion() + "</html>");
-                                        newAnswerLabel.setText("<html>A: " + newFlashcard.getAnswer() + "</html>");
+                                        String newQuestion = newQuestionField.getText().trim();
+                                        String newAnswer = newAnswerField.getText().trim();
+
+                                        if (!newQuestion.isEmpty() && !newAnswer.isEmpty()) {
+                                            Flashcard updatedFlashcard = new Flashcard(newQuestion, newAnswer);
+
+                                            // Check for duplicate questions in the deck
+                                            boolean isDuplicate2 = false;
+                                            for (Flashcard deckFlashcard : deck) {
+                                                if (deckFlashcard != newFlashcard && deckFlashcard.getQuestion().
+                                                        equalsIgnoreCase(updatedFlashcard.getQuestion())) {
+                                                    isDuplicate2 = true;
+                                                    break; // Exit loop if a duplicate is found
+                                                }
+                                            }
+
+                                            if (!isDuplicate2) {
+                                                // Update the flashcard
+                                                newFlashcard.setQuestion(newQuestion);
+                                                newFlashcard.setAnswer(newAnswer);
+
+                                                // Update labels
+                                                newQuestionLabel.setText("<html>Q: " + newFlashcard.getQuestion()
+                                                        + "</html>");
+                                                newAnswerLabel.setText("<html>A: " + newFlashcard.getAnswer()
+                                                        + "</html>");
+
+                                                // Save changes to the file
+                                                DataManager.saveDecks(decks);
+
+                                                System.out.println("Flashcard updated.");
+                                            } else {
+                                                // Show a dialog if a duplicate is found
+                                                int confirmResult = JOptionPane.showConfirmDialog(null,
+                                                        "A flashcard with this question already exists. Do " +
+                                                                "you still want to update it?",
+                                                        "Duplicate Question", JOptionPane.YES_NO_OPTION,
+                                                        JOptionPane.WARNING_MESSAGE);
+                                                if (confirmResult == JOptionPane.YES_OPTION) {
+                                                    // Update the flashcard
+                                                    newFlashcard.setQuestion(newQuestion);
+                                                    newFlashcard.setAnswer(newAnswer);
+
+                                                    // Update labels
+                                                    newQuestionLabel.setText("<html>Q: " + newFlashcard.getQuestion()
+                                                            + "</html>");
+                                                    newAnswerLabel.setText("<html>A: " + newFlashcard.getAnswer()
+                                                            + "</html>");
+
+                                                    // Save changes to the file
+                                                    DataManager.saveDecks(decks);
+
+                                                    System.out.println("Flashcard updated.");
+                                                }
+                                            }
+                                        } else {
+                                            JOptionPane.showMessageDialog(null, "Question " +
+                                                    "and answer cannot be empty.");
+                                        }
                                     }
                                 });
+
 
                                 buttonPanel.add(newEditButton);
                                 buttonPanel.add(newDeleteButton);
@@ -939,17 +1016,17 @@ public class FlashcardManager {
                                 flashcardPanel.add(flashcardEntry);
                                 flashcardPanel.revalidate();
                                 flashcardPanel.repaint();
-
-                                // Save changes to the file
                                 DataManager.saveDecks(decks);
                             } else {
-                                JOptionPane.showMessageDialog(modifyPanel, "This flashcard already exists.");
+                                JOptionPane.showMessageDialog(modifyPanel, "A flashcard with the same " +
+                                        "question already exists.");
                             }
                         } else {
                             JOptionPane.showMessageDialog(modifyPanel, "Question and answer cannot be empty.");
                         }
                     }
                 });
+
 
 
                 JPanel southPanel = new JPanel();
