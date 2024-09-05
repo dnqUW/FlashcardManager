@@ -126,41 +126,41 @@ public class FlashcardManager {
         buttonPanel.add(modifyButton);
         buttonPanel.add(deleteButton);
 
-        createButton.addActionListener(e -> {
-            System.out.println("Create button clicked");
-
-            // Create a new panel
-            JPanel newCreateDeckPanel = createDeckPanel();
-
-            // Add the new panel to cardPanel with an identifier
-            cardPanel.add(newCreateDeckPanel, "CreateDeckScreen");
-
-            // Switch to the new panel
-            CardLayout cl = (CardLayout) cardPanel.getLayout();
-            cl.show(cardPanel, "CreateDeckScreen");
-
-            // Revalidate and repaint to ensure proper layout update
-            cardPanel.revalidate();
-            cardPanel.repaint();
-        });
-
-        studyButton.addActionListener(e -> {
-            System.out.println("Study button clicked");
-            CardLayout cl = (CardLayout) cardPanel.getLayout();
-            cl.show(cardPanel, "StudyDeckScreen");
-        });
-
-        modifyButton.addActionListener(e -> {
-            System.out.println("Modify button clicked");
-            CardLayout cl = (CardLayout) cardPanel.getLayout();
-            cl.show(cardPanel, "ModifyDeckScreen");
-        });
-
-        deleteButton.addActionListener(e -> {
-            System.out.println("Delete button clicked");
-            CardLayout cl = (CardLayout) cardPanel.getLayout();
-            cl.show(cardPanel, "DeleteDeckScreen");
-        });
+//        createButton.addActionListener(e -> {
+//            System.out.println("Create button clicked");
+//
+//            // Create a new panel
+//            JPanel newCreateDeckPanel = createDeckPanel();
+//
+//            // Add the new panel to cardPanel with an identifier
+//            cardPanel.add(newCreateDeckPanel, "CreateDeckScreen");
+//
+//            // Switch to the new panel
+//            CardLayout cl = (CardLayout) cardPanel.getLayout();
+//            cl.show(cardPanel, "CreateDeckScreen");
+//
+//            // Revalidate and repaint to ensure proper layout update
+//            cardPanel.revalidate();
+//            cardPanel.repaint();
+//        });
+//
+//        studyButton.addActionListener(e -> {
+//            System.out.println("Study button clicked");
+//            CardLayout cl = (CardLayout) cardPanel.getLayout();
+//            cl.show(cardPanel, "StudyDeckScreen");
+//        });
+//
+//        modifyButton.addActionListener(e -> {
+//            System.out.println("Modify button clicked");
+//            CardLayout cl = (CardLayout) cardPanel.getLayout();
+//            cl.show(cardPanel, "ModifyDeckScreen");
+//        });
+//
+//        deleteButton.addActionListener(e -> {
+//            System.out.println("Delete button clicked");
+//            CardLayout cl = (CardLayout) cardPanel.getLayout();
+//            cl.show(cardPanel, "DeleteDeckScreen");
+//        });
 
         panel.add(buttonPanel, BorderLayout.SOUTH);
         return panel;
@@ -296,7 +296,7 @@ public class FlashcardManager {
                 if (!deck.contains(flashcard)) {
                     deck.add(flashcard);
                 } else {
-                    response = JOptionPane.showConfirmDialog(panel, "This flashcard already exists. " +
+                    response = JOptionPane.showConfirmDialog(panel, "This question already exists. " +
                             "Would you like to add it again?");
                 }
 
@@ -824,19 +824,27 @@ public class FlashcardManager {
                 editDeckNameButton.addActionListener(editNameEvent -> {
                     String newDeckName = JOptionPane.showInputDialog(modifyPanel, "Enter a new name for the deck:", deckName);
                     if (newDeckName == null) {
-                        // User cancelled the dialog
-                        return;
+                        return; // User canceled
                     }
+                    System.out.println(deckName);
+                    System.out.println(newDeckName);
 
                     newDeckName = newDeckName.trim(); // Trim whitespace
 
-                    if (!newDeckName.isEmpty() && !newDeckName.equals(deckName)) {
+                    if (!newDeckName.isEmpty()) {
                         if (!decks.containsKey(newDeckName)) {
                             ArrayList<Flashcard> tempDeck = decks.remove(deckName);
                             decks.put(newDeckName, tempDeck);
-                            titleLabel.setText("Modify Deck: " + newDeckName);
+                            decks.remove(deckName);
+                            titleLabel.setText("Modify Deck: " + newDeckName); // Update title label
+
+                            // Update the button that was clicked to show the new deck name
+                            deckButton.setText(newDeckName);
+
                             JOptionPane.showMessageDialog(modifyPanel, "Deck name updated successfully!");
-                            updateModifyPanel();
+
+                            // Refresh the modify panel to reflect changes
+                            updateAllPanels(); // Implement this method to recreate or refresh the modifyPanel
                         } else {
                             JOptionPane.showMessageDialog(modifyPanel, "A deck with this name already exists.");
                         }
@@ -844,6 +852,7 @@ public class FlashcardManager {
                         JOptionPane.showMessageDialog(modifyPanel, "Invalid name or same as current name.");
                     }
                 });
+
 
 
                 // Action listener to Add flashcard to deck
@@ -888,7 +897,8 @@ public class FlashcardManager {
 
                                 JButton newDeleteButton = createStyledButton("Delete");
                                 newDeleteButton.addActionListener(deleteEvent -> {
-                                    int confirm = JOptionPane.showConfirmDialog(modifyPanel, "Are you sure you want to delete this flashcard?",
+                                    int confirm = JOptionPane.showConfirmDialog(modifyPanel, "Are you sure " +
+                                                    "you want to delete this flashcard?",
                                             "Confirm Delete", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
                                     if (confirm == JOptionPane.YES_OPTION) {
                                         deck.remove(newFlashcard);
@@ -908,6 +918,7 @@ public class FlashcardManager {
                                     editPanel.add(newQuestionField);
                                     editPanel.add(new JLabel("Edit Answer:"));
                                     editPanel.add(newAnswerField);
+
 
                                     int editResult = JOptionPane.showConfirmDialog(null, editPanel, "Edit Flashcard",
                                             JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
