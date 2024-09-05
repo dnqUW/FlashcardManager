@@ -852,6 +852,7 @@ public class FlashcardManager {
 
                             // Refresh the modify panel to reflect changes
                             updateAllPanels(); // Implement this method to recreate or refresh the modifyPanel
+                            DataManager.saveDecks(decks);
                         } else {
                             JOptionPane.showMessageDialog(modifyPanel, "A deck with this name already exists.");
                         }
